@@ -1,13 +1,16 @@
 "use client"
 
 import Link from 'next/link'
-import { ArrowRight, Database, ShieldCheck, Zap, Cloud, LayoutDashboard, CheckCircle, ChevronRight, Github, Twitter, Linkedin, Mail } from 'lucide-react'
-import { motion, useScroll, useTransform } from "framer-motion"
-import { useEffect, useState } from 'react'
+import { ArrowRight, Database, ShieldCheck, Zap, Cloud, LayoutDashboard, CheckCircle, ChevronRight, Github, Twitter, Linkedin, Mail, User, LogOut } from 'lucide-react'
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
+import { useEffect, useState, useRef } from 'react'
 import { cn } from "@/lib/utils"
+import { signOut } from "next-auth/react"
 
 export default function LandingContent({ session }: { session: any }) {
     const [isScrolled, setIsScrolled] = useState(false)
+    const [isProfileOpen, setIsProfileOpen] = useState(false)
+    const profileRef = useRef<HTMLDivElement>(null)
     const { scrollY } = useScroll()
 
     // Make the navbar background more opaque on scroll
@@ -29,6 +32,16 @@ export default function LandingContent({ session }: { session: any }) {
         }
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
+    }, [])
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [])
 
     // Framer Motion Variants
@@ -68,22 +81,65 @@ export default function LandingContent({ session }: { session: any }) {
                         <a href="#features" className="hover:text-white transition-colors">Features</a>
                         <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
                         <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-                        <a href="https://github.com/omn7/Vura" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1"><Github className="w-4 h-4" /> GitHub</a>
+                        <Link href="/about" className="hover:text-white transition-colors flex items-center gap-1">About</Link>
                     </nav>
 
                     {/* CTA */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
+                        <a href="https://github.com/omn7/Vura" target="_blank" rel="noreferrer" className="hidden sm:flex items-center gap-2 text-sm text-[var(--color-neon-muted)] hover:text-white transition-colors border-r border-[var(--color-neon-border)] pr-4">
+                            <Github className="w-5 h-5" /> GitHub
+                        </a>
+
                         {session ? (
-                            <Link href="/dashboard" className="btn-secondary py-2 px-4 flex items-center gap-2 text-sm">
-                                <LayoutDashboard className="w-4 h-4" /> Dashboard
-                            </Link>
+                            <div className="flex items-center gap-3">
+                                <Link href="/dashboard" className="btn-secondary py-2 px-4 flex items-center gap-2 text-sm">
+                                    <LayoutDashboard className="w-4 h-4" /> Dashboard
+                                </Link>
+                                <div className="relative" ref={profileRef}>
+                                    <button
+                                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                        className="w-10 h-10 rounded-full bg-[var(--color-neon-surface)] border border-[var(--color-neon-border)] flex items-center justify-center overflow-hidden hover:border-[var(--color-neon-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-neon-primary)]/50"
+                                    >
+                                        {session.user?.image ? (
+                                            <img src={session.user.image} alt="User" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="w-5 h-5 text-[var(--color-neon-muted)]" />
+                                        )}
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isProfileOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                transition={{ duration: 0.15 }}
+                                                className="absolute right-0 mt-3 w-56 rounded-xl bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border border-[var(--color-neon-border)] shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden z-50 text-left"
+                                            >
+                                                <div className="px-4 py-3 border-b border-[var(--color-neon-border)] bg-[var(--color-neon-surface)]/50">
+                                                    <p className="text-sm font-medium text-white truncate">{session.user?.name || "User"}</p>
+                                                    <p className="text-xs text-[var(--color-neon-muted)] truncate mt-0.5">{session.user?.email}</p>
+                                                </div>
+                                                <div className="p-2">
+                                                    <button
+                                                        onClick={() => signOut({ callbackUrl: '/' })}
+                                                        className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-400/10 rounded-lg flex items-center gap-2 transition-colors group"
+                                                    >
+                                                        <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" /> Sign Out
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
                         ) : (
-                            <>
+                            <div className="flex items-center gap-3">
                                 <Link href="/login" className="text-sm text-[var(--color-neon-muted)] hover:text-white transition-colors hidden sm:block">Sign In</Link>
                                 <Link href="/register" className="btn-primary py-2 px-5 text-sm flex items-center gap-1.5">
                                     Get Started <ArrowRight className="w-3.5 h-3.5" />
                                 </Link>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -151,7 +207,7 @@ export default function LandingContent({ session }: { session: any }) {
 
                         {/* Social proof microtext */}
                         <motion.p variants={fadeUp} className="mt-6 text-xs text-[var(--color-neon-muted)]">
-                            Trusted by 500+ educators and event organizers · No credit card required
+                            Trusted by 50+ educators and event organizers · No credit card required
                         </motion.p>
                     </motion.div>
 
@@ -162,31 +218,67 @@ export default function LandingContent({ session }: { session: any }) {
                         transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
                         className="relative z-10 mt-20 w-full max-w-5xl mx-auto floating"
                     >
-                        <div className="glass-card p-1 rounded-2xl shadow-[0_30px_80px_rgba(0,229,153,0.15)] bg-gradient-to-b from-[rgba(255,255,255,0.1)] to-transparent">
-                            <div className="bg-[#0a0a0a] rounded-xl p-6 flex flex-col gap-3 overflow-hidden relative">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--color-neon-secondary)] via-[var(--color-neon-primary)] to-[var(--color-neon-purple)]"></div>
-                                {/* Fake terminal/preview */}
-                                <div className="flex items-center gap-2 mb-2">
-                                    <div className="w-3 h-3 rounded-full bg-red-500/70"></div>
-                                    <div className="w-3 h-3 rounded-full bg-yellow-500/70"></div>
-                                    <div className="w-3 h-3 rounded-full bg-green-500/70"></div>
-                                    <span className="ml-4 text-xs text-[var(--color-neon-muted)] font-mono">vura — generating 3 of 1000...</span>
+                        <div className="rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,0.6)] border border-[#333333] overflow-hidden bg-[#1a1a1a] backdrop-blur-xl">
+                            {/* MacBook style Title Bar */}
+                            <div className="h-10 bg-[#2a2a2a]/80 backdrop-blur-md flex items-center px-4 border-b border-[#333333] relative">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]"></div>
+                                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]"></div>
+                                    <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]"></div>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="absolute left-1/2 -translate-x-1/2 text-xs font-medium text-[#888888] flex items-center gap-2">
+                                    <ShieldCheck className="w-3.5 h-3.5" /> vura-secure-dashboard.app
+                                </div>
+                            </div>
+
+                            {/* Window Content */}
+                            <div className="p-8 pb-10 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] relative">
+                                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[var(--color-neon-secondary)] via-[var(--color-neon-primary)] to-[var(--color-neon-purple)] opacity-30"></div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     {["CERT-A1B2C3D4", "CERT-E5F6G7H8", "CERT-I9J0K1L2"].map((id, i) => (
                                         <motion.div
                                             key={id}
-                                            whileHover={{ scale: 1.05, borderColor: "rgba(0,229,153,0.5)" }}
+                                            whileHover={{ scale: 1.05, translateY: -5 }}
                                             className={cn(
-                                                "bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-xl p-4 flex flex-col gap-2 transition-colors relative overflow-hidden",
-                                                i === 1 ? "floating-delayed" : ""
+                                                "relative bg-[#0d0d0d] bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.02)_0%,transparent_100%)] border-[4px] border-[#2a2a2a] rounded-lg p-5 flex flex-col items-center text-center shadow-[0_20px_40px_rgba(0,0,0,0.9)] overflow-hidden min-h-[190px]",
+                                                i === 1 ? "floating-delayed" : "floating"
                                             )}
                                         >
-                                            <div className="absolute -right-6 -top-6 w-16 h-16 bg-[var(--color-neon-primary)]/10 rounded-full blur-xl"></div>
-                                            <div className="text-[10px] text-[var(--color-neon-muted)] uppercase tracking-wider">Certificate</div>
-                                            <div className="text-sm font-semibold text-white">{["Alice Johnson", "Bob Williams", "Carol Davis"][i]}</div>
-                                            <div className="text-xs text-[var(--color-neon-muted)]">Next.js Development</div>
-                                            <div className="mt-2 font-mono text-[10px] text-[var(--color-neon-primary)] bg-[var(--color-neon-primary)]/10 px-2 py-1 rounded-lg w-auto inline-block border border-[var(--color-neon-primary)]/20">{id}</div>
+                                            {/* Outer Glow on hover */}
+                                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[radial-gradient(circle_at_center,rgba(157,78,221,0.1),transparent_70%)] pointer-events-none"></div>
+
+                                            {/* Inner Elegant Gold Border */}
+                                            <div className="absolute inset-1.5 border border-[#c5a059]/40 rounded-sm pointer-events-none mix-blend-screen"></div>
+                                            <div className="absolute inset-2 border-[0.5px] border-[#c5a059]/20 rounded-sm pointer-events-none"></div>
+
+                                            <div className="text-[6px] font-bold text-[#c5a059] uppercase tracking-[0.3em] mt-1 mb-3">Certificate of Completion</div>
+
+                                            <div className="text-[7px] italic text-[#888888] mb-1">This is to certify that</div>
+                                            <div className="text-lg font-bold text-white font-serif mb-1 leading-tight tracking-wide drop-shadow-md">{["Aarav Patel", "Priya Sharma", "Rohan Gupta"][i]}</div>
+                                            <div className="text-[7px] text-[#888888] mb-3 leading-none">has successfully completed the requirements for</div>
+
+                                            <div className="text-xs font-bold text-[var(--color-neon-primary)] mb-auto tracking-widest uppercase leading-none bg-[var(--color-neon-primary)]/10 px-3 py-1.5 rounded border border-[var(--color-neon-primary)]/20 shadow-[0_0_10px_rgba(0,229,153,0.1)]">Next.js Architecture</div>
+
+                                            <div className="w-full flex justify-between items-end mt-5 pt-3 border-t border-[#333333] relative z-10">
+                                                <div className="flex flex-col items-start translate-y-1">
+                                                    <div className="h-[0.5px] w-10 bg-[#555555] mb-1.5 shadow-sm"></div>
+                                                    <div className="text-[4.5px] text-[#888888] uppercase tracking-wider">Issue Date</div>
+                                                    <div className="text-[6px] font-medium text-[#cccccc]">Oct 24, 2023</div>
+                                                </div>
+
+                                                {/* Premium Gold Ribbon Seal */}
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ffd700] via-[#daa520] to-[#b8860b] flex items-center justify-center shadow-[0_0_15px_rgba(218,165,32,0.4)] absolute left-1/2 -translate-x-1/2 bottom-[-8px] ring-2 ring-[#0d0d0d]">
+                                                    <div className="w-8 h-8 rounded-full border-[0.5px] border-[#fff8dc]/70 border-dashed flex items-center justify-center bg-gradient-to-tr from-[#b8860b] to-[#ffd700]">
+                                                        <ShieldCheck className="w-4 h-4 text-[#fff8dc] drop-shadow-sm" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-end translate-y-1">
+                                                    <div className="h-[0.5px] w-10 bg-[#555555] mb-1.5 shadow-sm"></div>
+                                                    <div className="text-[4.5px] text-[#888888] uppercase tracking-wider">Verifier ID</div>
+                                                    <div className="text-[6px] font-mono text-[#cccccc]">{id}</div>
+                                                </div>
+                                            </div>
                                         </motion.div>
                                     ))}
                                 </div>
@@ -199,8 +291,8 @@ export default function LandingContent({ session }: { session: any }) {
                 <section className="border-y border-[var(--color-neon-border)] bg-[rgba(10,10,10,0.8)] backdrop-blur-md py-12 relative overflow-hidden">
                     <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center relative z-10">
                         {[
-                            { value: "10K+", label: "Certificates Generated" },
-                            { value: "500+", label: "Organizations Using Vura" },
+                            { value: "500+", label: "Certificates Generated" },
+                            { value: "20+", label: "Organizations Using Vura" },
                             { value: "99.9%", label: "Uptime SLA" },
                             { value: "<2s", label: "Average Generation Time" },
                         ].map((stat, i) => (
@@ -231,7 +323,7 @@ export default function LandingContent({ session }: { session: any }) {
                             className="text-center mb-16"
                         >
                             <span className="text-xs font-semibold uppercase tracking-widest text-[var(--color-neon-primary)] bg-[var(--color-neon-primary)]/10 px-3 py-1 rounded-full border border-[var(--color-neon-primary)]/20">Features</span>
-                            <h2 className="mt-6 text-4xl md:text-5xl font-bold text-white">Everything you need,<br />nothing you don't</h2>
+                            <h2 className="mt-6 text-4xl md:text-5xl font-bold text-white">Everything you need,<br />nothing you don&apos;t</h2>
                             <p className="mt-4 text-[var(--color-neon-muted)] max-w-xl mx-auto">Vura is designed to stay out of your way — powerful under the hood, effortless on the surface.</p>
                         </motion.div>
 
@@ -326,7 +418,7 @@ export default function LandingContent({ session }: { session: any }) {
                             >
                                 <div>
                                     <p className="text-sm font-semibold text-[var(--color-neon-muted)] uppercase tracking-wider">Free</p>
-                                    <p className="text-5xl font-black text-white mt-2">$0 <span className="text-lg text-[var(--color-neon-muted)] font-normal">/ mo</span></p>
+                                    <p className="text-5xl font-black text-white mt-2">₹0 <span className="text-lg text-[var(--color-neon-muted)] font-normal">/ mo</span></p>
                                     <p className="text-sm text-[var(--color-neon-muted)] mt-1">No credit card required</p>
                                 </div>
                                 <ul className="flex flex-col gap-3 my-4">
@@ -347,7 +439,7 @@ export default function LandingContent({ session }: { session: any }) {
                                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,229,153,0.06),transparent_60%)] pointer-events-none"></div>
                                 <div className="relative">
                                     <p className="text-sm font-semibold text-[var(--color-neon-primary)] uppercase tracking-wider">Pro</p>
-                                    <p className="text-5xl font-black text-white mt-2">$19 <span className="text-lg text-[var(--color-neon-muted)] font-normal">/ mo</span></p>
+                                    <p className="text-5xl font-black text-white mt-2">₹999 <span className="text-lg text-[var(--color-neon-muted)] font-normal">/ mo</span></p>
                                     <p className="text-sm text-[var(--color-neon-muted)] mt-1">For teams and events</p>
                                 </div>
                                 <ul className="flex flex-col gap-3 my-4 relative">
@@ -396,9 +488,9 @@ export default function LandingContent({ session }: { session: any }) {
                             </p>
                             <div className="flex items-center gap-4 mt-6">
                                 <a href="https://github.com/omn7/Vura" target="_blank" rel="noreferrer" className="text-[var(--color-neon-muted)] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"><Github className="w-5 h-5" /></a>
-                                <a href="#" className="text-[var(--color-neon-muted)] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"><Twitter className="w-5 h-5" /></a>
-                                <a href="#" className="text-[var(--color-neon-muted)] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"><Linkedin className="w-5 h-5" /></a>
-                                <a href="mailto:hello@vura.app" className="text-[var(--color-neon-muted)] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"><Mail className="w-5 h-5" /></a>
+                                <a href="https://x.com/mr_codex" className="text-[var(--color-neon-muted)] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"><Twitter className="w-5 h-5" /></a>
+                                <a href="https://www.linkedin.com/in/omnarkhede/" className="text-[var(--color-neon-muted)] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"><Linkedin className="w-5 h-5" /></a>
+                                <a href="mailto:dev.om@outlook.com" className="text-[var(--color-neon-muted)] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"><Mail className="w-5 h-5" /></a>
                             </div>
                         </div>
 
@@ -406,7 +498,7 @@ export default function LandingContent({ session }: { session: any }) {
                         <div>
                             <p className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Product</p>
                             <ul className="flex flex-col gap-3">
-                                {[["Features", "#features"], ["How It Works", "#how-it-works"], ["Pricing", "#pricing"], ["Dashboard", "/dashboard"]].map(([label, href]) => (
+                                {[["Features", "#features"], ["How It Works", "#how-it-works"], ["Pricing", "#pricing"], ["Dashboard", "/dashboard"], ["About", "/about"]].map(([label, href]) => (
                                     <li key={label}><a href={href} className="text-sm text-[var(--color-neon-muted)] hover:text-white hover:translate-x-1 inline-block transition-all">{label}</a></li>
                                 ))}
                             </ul>
@@ -415,7 +507,7 @@ export default function LandingContent({ session }: { session: any }) {
                         <div>
                             <p className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</p>
                             <ul className="flex flex-col gap-3">
-                                {[["GitHub", "https://github.com/omn7/Vura"], ["Privacy Policy", "#"], ["Terms of Service", "#"], ["Contact Us", "mailto:hello@vura.app"]].map(([label, href]) => (
+                                {[["GitHub", "https://github.com/omn7/Vura"], ["Privacy Policy", "/privacy"], ["Terms of Service", "/terms"], ["Contact Us", "mailto:dev.om@outlook.com"]].map(([label, href]) => (
                                     <li key={label}><a href={href} className="text-sm text-[var(--color-neon-muted)] hover:text-white hover:translate-x-1 inline-block transition-all">{label}</a></li>
                                 ))}
                             </ul>
@@ -424,9 +516,9 @@ export default function LandingContent({ session }: { session: any }) {
 
                     {/* Bottom bar */}
                     <div className="pt-8 border-t border-[var(--color-neon-border)] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--color-neon-muted)]">
-                        <p>© {new Date().getFullYear()} Vura Inc. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} <a href="https://omnarkhede.tech" target="_blank" rel="noreferrer" className="text-white hover:text-[var(--color-neon-primary)] transition-colors inline-block font-medium">Om Narkhede</a>. All rights reserved.</p>
                         <p className="flex items-center gap-1">
-                            Built with <span className="text-[var(--color-neon-primary)] animate-pulse">♥</span> using Next.js, Prisma &amp; AWS
+                            <a href="https://omnarkhede.tech" target="_blank" rel="noreferrer" className="hover:text-white transition-colors underline underline-offset-4 hover:decoration-[var(--color-neon-primary)]">Visit Dev</a>
                         </p>
                     </div>
                 </div>

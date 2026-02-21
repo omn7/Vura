@@ -15,7 +15,24 @@ const bricolage = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: 'Vura - Bulk Certificate Generation Platform',
-  description: 'Automate Certificate Generation at Scale. Create, distribute, and verify certificates with ease.',
+  description: 'Automate Certificate Generation at Scale. Create, distribute, and verify certificates with ease using Vura.',
+  keywords: ['Certificate Generator', 'Bulk Certificates', 'Next.js', 'Automated PDF Generation', 'Online Certificates'],
+  authors: [{ name: 'Om Narkhede', url: 'https://omnarkhede.tech' }],
+  creator: 'Om Narkhede',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://vura.app',
+    title: 'Vura - Bulk Certificate Generation Platform',
+    description: 'Upload an Excel sheet, drop your PDF template, and Vura bulk-generates verifiable certificates in seconds.',
+    siteName: 'Vura',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vura - Bulk Certificate Generation Platform',
+    description: 'Automate Certificate Generation at Scale. Create, distribute, and verify certificates with ease.',
+    creator: '@mr_codex',
+  },
 }
 
 import { Providers } from "@/components/Providers"
