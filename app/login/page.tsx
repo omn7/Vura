@@ -118,9 +118,7 @@ function LoginContent() {
                     Continue with Google
                 </button>
 
-                <div className="mt-8 text-sm text-[var(--color-neon-muted)]">
-                    Don't have an account? <Link href="/register" className="text-[var(--color-neon-primary)] hover:underline">Sign up</Link>
-                </div>
+                <p className="text-[var(--color-neon-muted)]">Don&apos;t have an account? <Link href="/register" className="text-[var(--color-neon-primary)] hover:underline">Sign up</Link></p>
             </div>
         </main>
     );

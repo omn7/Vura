@@ -28,7 +28,7 @@ export const authOptions: NextAuthOptions = {
                 });
 
                 // User doesn't exist or registered with Google (no password)
-                if (!user || (!user.password && user.email)) {
+                if (!user || !user.password) {
                     throw new Error("User not found or uses OAuth");
                 }
 
@@ -38,6 +38,7 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Invalid Credentials");
                 }
 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 return user as any;
             }
         })

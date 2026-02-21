@@ -1,17 +1,20 @@
 "use client"
 
 import Link from 'next/link'
-import { ArrowRight, Database, ShieldCheck, Zap, Cloud, LayoutDashboard, CheckCircle, ChevronRight, Github, Twitter, Linkedin, Mail, User, LogOut } from 'lucide-react'
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
+import { ArrowRight, Database, ShieldCheck, Zap, Cloud, LayoutDashboard, CheckCircle, ChevronRight, Github, Twitter, Linkedin, Mail, User, LogOut, Search } from 'lucide-react'
+import { motion, useScroll, useTransform, AnimatePresence, Variants } from "framer-motion"
 import { useEffect, useState, useRef } from 'react'
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 export default function LandingContent({ session }: { session: any }) {
     const [isScrolled, setIsScrolled] = useState(false)
     const [isProfileOpen, setIsProfileOpen] = useState(false)
+    const [searchId, setSearchId] = useState("")
     const profileRef = useRef<HTMLDivElement>(null)
     const { scrollY } = useScroll()
+    const router = useRouter()
 
     // Make the navbar background more opaque on scroll
     const navBackground = useTransform(
@@ -45,12 +48,12 @@ export default function LandingContent({ session }: { session: any }) {
     }, [])
 
     // Framer Motion Variants
-    const fadeUp = {
+    const fadeUp: Variants = {
         hidden: { opacity: 0, y: 30 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
     }
 
-    const staggerContainer = {
+    const staggerContainer: Variants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
@@ -203,6 +206,34 @@ export default function LandingContent({ session }: { session: any }) {
                             <a href="#how-it-works" className="btn-secondary text-base px-8 py-4 bg-[rgba(10,10,10,0.5)] backdrop-blur-sm">
                                 See How It Works
                             </a>
+                        </motion.div>
+
+                        {/* Search Bar */}
+                        <motion.div variants={fadeUp} className="mt-8 w-full max-w-md relative group z-20">
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    if (searchId.trim()) router.push(`/verify/${searchId.trim()}`);
+                                }}
+                                className="relative flex items-center"
+                            >
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Search className="w-5 h-5 text-[var(--color-neon-muted)] group-focus-within:text-[var(--color-neon-primary)] transition-colors" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={searchId}
+                                    onChange={(e) => setSearchId(e.target.value)}
+                                    placeholder="Enter Certificate ID to verify..."
+                                    className="w-full bg-[rgba(10,10,10,0.5)] backdrop-blur-md border border-[var(--color-neon-border)] rounded-full py-3 pr-24 pl-11 text-sm text-white focus:outline-none focus:border-[var(--color-neon-primary)] focus:ring-1 focus:ring-[var(--color-neon-primary)] transition-all placeholder-[var(--color-neon-muted)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+                                />
+                                <button
+                                    type="submit"
+                                    className="absolute right-1.5 top-1.5 bottom-1.5 bg-[var(--color-neon-surface-hover)] border border-[var(--color-neon-border)] hover:border-[var(--color-neon-primary)] hover:bg-[rgba(0,229,153,0.1)] hover:text-[#00e599] text-[var(--color-neon-muted)] text-xs font-semibold px-4 rounded-full transition-colors flex items-center"
+                                >
+                                    Verify
+                                </button>
+                            </form>
                         </motion.div>
 
                         {/* Social proof microtext */}

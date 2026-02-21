@@ -20,7 +20,7 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
                     <XCircle className="w-20 h-20 mx-auto text-red-500 mb-6 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
                     <h1 className="text-3xl font-bold mb-2">Invalid Certificate</h1>
                     <p className="text-[var(--color-neon-muted)]">
-                        We couldn't find a certificate matching the ID: <span className="text-white font-mono">{id}</span>.
+                        We couldn&apos;t find a certificate matching the ID: <span className="text-white font-mono">{id}</span>.
                     </p>
                 </div>
             </main>

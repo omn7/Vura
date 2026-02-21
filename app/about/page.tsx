@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Code, Database, Server, Shield, Layout, Zap } from 'lucide-react'
+import { ArrowLeft, Code, Database, Server, Shield, Layout } from 'lucide-react'
 
 export default function AboutPage() {
     return (
@@ -80,7 +80,7 @@ export default function AboutPage() {
                     </h2>
                     <div className="prose prose-invert max-w-none text-gray-300 space-y-4">
                         <p>
-                            The hardest part of building Vura was the <strong>coordinate mapping system</strong>. When a user uploads a blank PDF template, the browser doesn't inherently "know" where the lines are.
+                            The hardest part of building Vura was the <strong>coordinate mapping system</strong>. When a user uploads a blank PDF template, the browser doesn&apos;t inherently &quot;know&quot; where the lines are.
                         </p>
                         <p>
                             I had to build a custom interactive React visualizer using `react-pdf` that calculates exact X and Y percentage coordinates as the user drags markers across the screen.

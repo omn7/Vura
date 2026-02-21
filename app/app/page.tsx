@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FileUp, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Crosshair, LayoutDashboard, LogOut } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
@@ -11,7 +11,7 @@ import dynamic from 'next/dynamic';
 const PdfPreview = dynamic(() => import('@/components/PdfPreview'), { ssr: false });
 
 export default function Dashboard() {
-    const { data: session, status } = useSession();
+    const { status } = useSession();
 
     if (status === "unauthenticated") {
         redirect("/login");
@@ -25,7 +25,14 @@ export default function Dashboard() {
     const [error, setError] = useState<string | null>(null);
     const [successCount, setSuccessCount] = useState<number | null>(null);
 
-    const [certificates, setCertificates] = useState<any[]>([]);
+    type Certificate = {
+        certificateId: string;
+        name: string;
+        course: string;
+        issueDate: string;
+        pdfUrl: string;
+    };
+    const [certificates, setCertificates] = useState<Certificate[]>([]);
 
     // Coordinate Assistant State
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
@@ -49,7 +56,7 @@ export default function Dashboard() {
         qrCode: { enabled: true, x: 80, y: 85, scale: 0.5 },
     });
 
-    const handleConfigChange = (field: keyof typeof config, key: string, value: any) => {
+    const handleConfigChange = (field: keyof typeof config, key: string, value: string | number | boolean) => {
         setConfig(prev => ({
             ...prev,
             [field]: { ...prev[field], [key]: value }
@@ -119,9 +126,9 @@ export default function Dashboard() {
             setSuccessCount(data.count || 0);
             setCertificates(data.certificates || []);
             setStatusText(`Successfully generated and uploaded ${data.count} certificates.`);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.message || "An unexpected error occurred.");
+            setError(err instanceof Error ? err.message : "An unexpected error occurred.");
         } finally {
             setLoading(false);
         }
@@ -212,7 +219,7 @@ export default function Dashboard() {
                                         Open Fullscreen Map
                                     </button>
                                 </div>
-                                <p className="text-xs text-[var(--color-neon-muted)] mb-4">Click "Target" on a setting, then click the preview. Drag markers to adjust.</p>
+                                <p className="text-xs text-[var(--color-neon-muted)] mb-4">Click &quot;Target&quot; on a setting, then click the preview. Drag markers to adjust.</p>
 
                                 <div className="relative border-2 border-[var(--color-neon-border)] rounded-xl overflow-hidden bg-black/50 flex flex-1 items-center justify-center p-4">
                                     <div

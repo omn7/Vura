@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         // Cast to expected type
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rows = xlsx.utils.sheet_to_json<any>(sheet);
 
         if (rows.length === 0) {
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
             const certificateId = generateCuid(); // e.g. CERT-A1B2C3D4
 
             // Create a normalized version of the row object
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const normalizedRow: Record<string, any> = {};
             for (const [key, value] of Object.entries(row)) {
                 normalizedRow[normalizeKey(key)] = value;
@@ -117,7 +119,7 @@ export async function POST(req: NextRequest) {
             success: true,
             certificates: generatedRecords
         }, { status: 200 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Certificate Generation Error:", error);
         return NextResponse.json({ error: "Failed to generate certificates. Check server logs." }, { status: 500 });
     }

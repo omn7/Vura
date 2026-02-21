@@ -66,7 +66,7 @@ export default async function DashboardPage() {
                         <div className="w-16 h-16 rounded-full bg-[var(--color-neon-surface-hover)] flex items-center justify-center mb-4">
                             <CheckCircle className="w-8 h-8 text-[var(--color-neon-muted)] opacity-50" />
                         </div>
-                        <h2 className="text-xl font-bold mb-2">No Certificates Yet</h2>
+                        <h3 className="text-xl font-bold text-white mb-2">You don&apos;t have any certificates yet</h3>
                         <p className="text-[var(--color-neon-muted)] max-w-md mb-6">
                             You haven't generated any certificates with your account. Head over to the generator to create your first batch!
                         </p>

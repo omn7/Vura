@@ -11,6 +11,7 @@ export interface CertificateData {
 export async function generateCertificate(
     templateBuffer: ArrayBuffer,
     data: CertificateData,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     settings?: any
 ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.load(templateBuffer)
