@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-bg: #030303;
+  --color-neon-primary: #00e599;
+  --color-neon-secondary: #007acc;
+  --color-neon-purple: #9d4edd;
+  --color-neon-surface: #0a0a0a;
+  --color-neon-surface-hover: #141414;
+  --color-neon-border: #222222;
+  --color-neon-text: #eaeaea;
+  --color-neon-muted: #888888;
+}
+
+@layer base {
+  html, body {
+    @apply bg-[var(--color-neon-bg)] text-[var(--color-neon-text)] antialiased min-h-screen selection:bg-[var(--color-neon-primary)] selection:text-black;
+  }
+}
+
+.glow-bg {
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, rgba(0, 229, 153, 0.15) 0%, rgba(157, 78, 221, 0.05) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-card {
+  @apply bg-[var(--color-neon-surface)] border border-[var(--color-neon-border)] rounded-2xl p-6 backdrop-blur-md;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-card:hover {
+  @apply bg-[var(--color-neon-surface-hover)];
+  border-color: rgba(0, 229, 153, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 229, 153, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary {
+  @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-black bg-[var(--color-neon-primary)] rounded-full transition-all duration-300;
+  box-shadow: 0 0 15px rgba(0, 229, 153, 0.4);
+}
+.btn-primary:hover {
+  @apply bg-[#00ffaa];
+  box-shadow: 0 0 25px rgba(0, 229, 153, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-white bg-transparent border border-[var(--color-neon-border)] rounded-full transition-all duration-300;
+}
+.btn-secondary:hover {
+  @apply border-[var(--color-neon-primary)] bg-[rgba(0,229,153,0.05)];
+}

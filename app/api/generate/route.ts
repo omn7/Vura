@@ -1,0 +1,107 @@
+import { NextRequest, NextResponse } from "next/server";
+import * as xlsx from "xlsx";
+import prisma from "@/lib/prisma";
+import { generateCertificate } from "@/lib/generateCertificate";
+import { uploadToS3 } from "@/lib/s3";
+
+function generateCuid() {
+    const buf = new Uint8Array(4);
+    crypto.getRandomValues(buf);
+    return 'CERT-' + Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+export async function POST(req: NextRequest) {
+    try {
+        const formData = await req.formData();
+
+        const templateFile = formData.get("template") as File | null;
+        const datasetFile = formData.get("dataset") as File | null;
+
+        if (!templateFile || !datasetFile) {
+            return NextResponse.json({ error: "Missing template or dataset file." }, { status: 400 });
+        }
+
+        // 1. Read files into buffers
+        const templateBuffer = await templateFile.arrayBuffer();
+        const datasetBuffer = await datasetFile.arrayBuffer();
+
+        // 2. Parse Excel dataset
+        const workbook = xlsx.read(datasetBuffer, { type: "buffer" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        // Cast to expected type
+        const rows = xlsx.utils.sheet_to_json<any>(sheet);
+
+        if (rows.length === 0) {
+            return NextResponse.json({ error: "The provided Excel file is empty." }, { status: 400 });
+        }
+
+        // 3. Process each row
+        const normalizeKey = (key: string) => key.trim().toLowerCase();
+
+        // Validate if necessary columns exist in the first row case-insensitively
+        const firstRow = rows[0];
+        const normalizedKeys = Object.keys(firstRow).map(normalizeKey);
+
+        if (!normalizedKeys.includes('name') || !normalizedKeys.includes('course') || !normalizedKeys.includes('issuedate')) {
+            return NextResponse.json({ error: "Excel must contain 'name', 'course', and 'issueDate' columns." }, { status: 400 });
+        }
+
+        // Prepare S3 URL for the original template (just so it's stored once)
+        const templateFileName = `templates/template_${Date.now()}.pdf`;
+        const templateS3Url = await uploadToS3(Buffer.from(templateBuffer), templateFileName);
+
+        const generatedRecords = [];
+
+        for (const row of rows) {
+            const certificateId = generateCuid(); // e.g. CERT-A1B2C3D4
+
+            // Create a normalized version of the row object
+            const normalizedRow: Record<string, any> = {};
+            for (const [key, value] of Object.entries(row)) {
+                normalizedRow[normalizeKey(key)] = value;
+            }
+
+            const certData = {
+                name: String(normalizedRow.name || "Unknown"),
+                course: String(normalizedRow.course || "Unknown"),
+                issueDate: String(normalizedRow.issuedate || "Unknown"),
+                certificateId,
+            };
+
+            // Generate the PDF
+            const pdfBuffer = await generateCertificate(templateBuffer, certData);
+
+            // Upload generated PDF to S3
+            const pdfFileName = `certificates/${certificateId}.pdf`;
+            const pdfS3Url = await uploadToS3(pdfBuffer, pdfFileName);
+
+            // We collect data for bulk insert
+            generatedRecords.push({
+                certificateId,
+                name: certData.name,
+                course: certData.course,
+                issueDate: certData.issueDate,
+                templateUrl: templateS3Url, // Reference to original
+                pdfUrl: pdfS3Url,
+            });
+        }
+
+        // 4. Save metadata to Neon Postgres via Prisma
+        const dbResult = await prisma.certificate.createMany({
+            data: generatedRecords,
+            skipDuplicates: true,
+        });
+
+        // Fetch back the created objects to return them exactly as recorded (optional based on architecture, but returning the in-memory built array also works perfectly)
+
+        return NextResponse.json({
+            count: dbResult.count,
+            success: true,
+            certificates: generatedRecords
+        }, { status: 200 });
+    } catch (error: any) {
+        console.error("Certificate Generation Error:", error);
+        return NextResponse.json({ error: "Failed to generate certificates. Check server logs." }, { status: 500 });
+    }
+}
