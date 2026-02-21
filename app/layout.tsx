@@ -1,9 +1,17 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Outfit, Bricolage_Grotesque } from 'next/font/google'
 import './globals.css'
 import { ReactNode } from 'react'
 
-const inter = Inter({ subsets: ['latin'] })
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+})
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-bricolage',
+})
 
 export const metadata: Metadata = {
   title: 'Vura - Bulk Certificate Generation Platform',
@@ -19,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${outfit.variable} ${bricolage.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
           <div className="relative min-h-screen flex flex-col overflow-x-hidden">
             {children}

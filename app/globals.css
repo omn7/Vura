@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
   --color-neon-bg: #030303;
   --color-neon-primary: #00e599;
   --color-neon-secondary: #007acc;
@@ -13,7 +16,9 @@
 }
 
 @layer base {
-  html, body {
+
+  html,
+  body {
     @apply bg-[var(--color-neon-bg)] text-[var(--color-neon-text)] antialiased min-h-screen selection:bg-[var(--color-neon-primary)] selection:text-black;
   }
 }
@@ -45,6 +50,7 @@
   @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-black bg-[var(--color-neon-primary)] rounded-full transition-all duration-300;
   box-shadow: 0 0 15px rgba(0, 229, 153, 0.4);
 }
+
 .btn-primary:hover {
   @apply bg-[#00ffaa];
   box-shadow: 0 0 25px rgba(0, 229, 153, 0.6);
@@ -54,6 +60,38 @@
 .btn-secondary {
   @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-white bg-transparent border border-[var(--color-neon-border)] rounded-full transition-all duration-300;
 }
+
 .btn-secondary:hover {
-  @apply border-[var(--color-neon-primary)] bg-[rgba(0,229,153,0.05)];
+  @apply border-[var(--color-neon-primary)] bg-[#00e599]/[0.05];
+}
+
+/* ─── Animated Backgrounds ─── */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+}
+
+.floating {
+  animation: floating 6s ease-in-out infinite;
+}
+
+.floating-delayed {
+  animation: floating 6s ease-in-out 3s infinite;
+}
+
+@keyframes floating {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
