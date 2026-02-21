@@ -1,13 +1,43 @@
 import Link from 'next/link'
-import { ArrowRight, Database, ShieldCheck, Zap, Cloud } from 'lucide-react'
+import { ArrowRight, Database, ShieldCheck, Zap, Cloud, LogIn, LayoutDashboard } from 'lucide-react'
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  let session = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.warn("Session decryption error, treating as unauthenticated:", error);
+  }
+
   return (
-    <main className="flex-1 flex flex-col items-center pt-32 pb-20 px-6 sm:px-12 z-10 relative">
+    <main className="flex-1 flex flex-col items-center pt-8 pb-20 px-6 sm:px-12 z-10 relative">
       <div className="glow-bg"></div>
 
+      {/* Header / Navbar */}
+      <header className="w-full max-w-6xl mx-auto flex items-center justify-between py-6 relative z-20">
+        <div className="text-2xl font-black tracking-widest uppercase flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-[var(--color-neon-primary)] flex items-center justify-center">
+            <div className="w-3 h-3 bg-black rounded-sm rotate-45 transform"></div>
+          </div>
+          VURA
+        </div>
+        <div className="flex items-center gap-4">
+          {session ? (
+            <Link href="/dashboard" className="btn-secondary py-2 px-4 flex items-center gap-2">
+              <LayoutDashboard className="w-4 h-4" /> Dashboard
+            </Link>
+          ) : (
+            <Link href="/login" className="btn-primary py-2 px-6 flex items-center gap-2 shadow-[0_0_15px_rgba(0,229,153,0.3)]">
+              <LogIn className="w-4 h-4" /> Sign In
+            </Link>
+          )}
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="max-w-4xl mx-auto text-center mt-10 space-y-8 relative z-10">
+      <section className="max-w-4xl mx-auto text-center mt-20 space-y-8 relative z-10">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-gray-500 pb-2">
           Automate Certificate <br /> Generation at Scale
         </h1>
@@ -16,7 +46,7 @@ export default function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
-          <Link href="/app" className="btn-primary group">
+          <Link href={session ? "/app" : "/login"} className="btn-primary group">
             Explore Vura
             <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
           </Link>

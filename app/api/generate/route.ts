@@ -3,6 +3,8 @@ import * as xlsx from "xlsx";
 import prisma from "@/lib/prisma";
 import { generateCertificate } from "@/lib/generateCertificate";
 import { uploadToS3 } from "@/lib/s3";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 function generateCuid() {
     const buf = new Uint8Array(4);
@@ -12,6 +14,16 @@ function generateCuid() {
 
 export async function POST(req: NextRequest) {
     try {
+        let session = null;
+        try {
+            session = await getServerSession(authOptions);
+        } catch (e) {
+            console.warn("Session invalid or decryption failed", e);
+        }
+
+        if (!session || !session.user) {
+            return NextResponse.json({ error: "Unauthorized. Please log in to generate certificates." }, { status: 401 });
+        }
         const formData = await req.formData();
 
         const templateFile = formData.get("template") as File | null;
@@ -47,6 +59,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Excel must contain 'name', 'course', and 'issueDate' columns." }, { status: 400 });
         }
 
+        // Extract settings payload
+        const settingsString = formData.get("settings") as string | null;
+        const settings = settingsString ? JSON.parse(settingsString) : null;
+
         // Prepare S3 URL for the original template (just so it's stored once)
         const templateFileName = `templates/template_${Date.now()}.pdf`;
         const templateS3Url = await uploadToS3(Buffer.from(templateBuffer), templateFileName);
@@ -69,8 +85,8 @@ export async function POST(req: NextRequest) {
                 certificateId,
             };
 
-            // Generate the PDF
-            const pdfBuffer = await generateCertificate(templateBuffer, certData);
+            // Generate the PDF and pass settings down if they exist
+            const pdfBuffer = await generateCertificate(templateBuffer, certData, settings);
 
             // Upload generated PDF to S3
             const pdfFileName = `certificates/${certificateId}.pdf`;
@@ -84,6 +100,7 @@ export async function POST(req: NextRequest) {
                 issueDate: certData.issueDate,
                 templateUrl: templateS3Url, // Reference to original
                 pdfUrl: pdfS3Url,
+                userId: session.user.id,
             });
         }
 

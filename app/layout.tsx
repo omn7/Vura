@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: 'Automate Certificate Generation at Scale. Create, distribute, and verify certificates with ease.',
 }
 
+import { Providers } from "@/components/Providers"
+
 export default function RootLayout({
   children,
 }: {
@@ -18,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="relative min-h-screen flex flex-col overflow-x-hidden">
-          {children}
-        </div>
+        <Providers>
+          <div className="relative min-h-screen flex flex-col overflow-x-hidden">
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   )
