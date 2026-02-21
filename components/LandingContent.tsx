@@ -1,7 +1,7 @@
 "use client"
 
 import Link from 'next/link'
-import { ArrowRight, Database, ShieldCheck, Zap, Cloud, LayoutDashboard, CheckCircle, ChevronRight, Github, Twitter, Linkedin, Mail, User, LogOut, Search } from 'lucide-react'
+import { ArrowRight, Database, ShieldCheck, Zap, Cloud, LayoutDashboard, CheckCircle, ChevronRight, Github, Twitter, Linkedin, Mail, User, LogOut, Search, Menu, X } from 'lucide-react'
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from "framer-motion"
 import { useEffect, useState, useRef } from 'react'
 import { cn } from "@/lib/utils"
@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 export default function LandingContent({ session }: { session: any }) {
     const [isScrolled, setIsScrolled] = useState(false)
     const [isProfileOpen, setIsProfileOpen] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [searchId, setSearchId] = useState("")
     const profileRef = useRef<HTMLDivElement>(null)
     const { scrollY } = useScroll()
@@ -139,13 +140,47 @@ export default function LandingContent({ session }: { session: any }) {
                         ) : (
                             <div className="flex items-center gap-3">
                                 <Link href="/login" className="text-sm text-[var(--color-neon-muted)] hover:text-white transition-colors hidden sm:block">Sign In</Link>
-                                <Link href="/register" className="btn-primary py-2 px-5 text-sm flex items-center gap-1.5">
+                                <Link href="/register" className="btn-primary py-2 px-5 text-sm flex items-center gap-1.5 hidden sm:flex">
                                     Get Started <ArrowRight className="w-3.5 h-3.5" />
                                 </Link>
                             </div>
                         )}
+
+                        {/* Mobile Menu Toggle */}
+                        <button
+                            className="md:hidden ml-2 text-white p-2 focus:outline-none"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        >
+                            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
                     </div>
                 </div>
+
+                {/* Mobile Navigation Menu */}
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="md:hidden bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border-b border-[var(--color-neon-border)] w-full overflow-hidden"
+                        >
+                            <nav className="flex flex-col px-6 py-4 space-y-4">
+                                <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-[var(--color-neon-muted)] hover:text-white transition-colors py-2 block">Features</a>
+                                <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-[var(--color-neon-muted)] hover:text-white transition-colors py-2 block">How It Works</a>
+                                <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-[var(--color-neon-muted)] hover:text-white transition-colors py-2 block">Pricing</a>
+                                <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-[var(--color-neon-muted)] hover:text-white transition-colors py-2 block">About</Link>
+
+                                {!session && (
+                                    <div className="flex flex-col gap-3 pt-4 border-t border-[var(--color-neon-border)]">
+                                        <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-center py-2 text-white bg-[rgba(255,255,255,0.05)] rounded-lg">Sign In</Link>
+                                        <Link href="/register" onClick={() => setIsMobileMenuOpen(false)} className="btn-primary py-2 flex justify-center w-full">Get Started</Link>
+                                    </div>
+                                )}
+                            </nav>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </motion.header>
 
             <main className="flex-1 flex flex-col pt-16">
