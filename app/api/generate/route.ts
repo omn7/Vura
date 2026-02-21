@@ -6,6 +6,8 @@ import { uploadToS3 } from "@/lib/s3";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 function generateCuid() {
     const buf = new Uint8Array(4);
     crypto.getRandomValues(buf);
