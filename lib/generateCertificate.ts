@@ -12,7 +12,8 @@ export async function generateCertificate(
     templateBuffer: ArrayBuffer,
     data: CertificateData,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    settings?: any
+    settings?: any,
+    baseUrlValue?: string
 ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.load(templateBuffer)
     const pages = pdfDoc.getPages()
@@ -98,7 +99,7 @@ export async function generateCertificate(
 
     // Add QR Code
     if (!settings || settings?.qrCode?.enabled) {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+        const baseUrl = baseUrlValue || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
         const qrUrl = `${baseUrl}/verify/${data.certificateId}`;
 
         const qrCodeDataUri = await QRCode.toDataURL(qrUrl, { margin: 1 })

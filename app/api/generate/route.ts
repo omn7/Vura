@@ -66,6 +66,11 @@ export async function POST(req: NextRequest) {
         const settingsString = formData.get("settings") as string | null;
         const settings = settingsString ? JSON.parse(settingsString) : null;
 
+        // Determine base URL dynamically so the QR code works in production
+        const protocol = req.headers.get("x-forwarded-proto") || "http";
+        const host = req.headers.get("host"); // e.g. "vuraweb.vercel.app"
+        const dynamicBaseUrl = host ? `${protocol}://${host}` : undefined;
+
         // Prepare S3 URL for the original template (just so it's stored once)
         const templateFileName = `templates/template_${Date.now()}.pdf`;
         const templateS3Url = await uploadToS3(Buffer.from(templateBuffer), templateFileName);
@@ -90,7 +95,7 @@ export async function POST(req: NextRequest) {
             };
 
             // Generate the PDF and pass settings down if they exist
-            const pdfBuffer = await generateCertificate(templateBuffer, certData, settings);
+            const pdfBuffer = await generateCertificate(templateBuffer, certData, settings, dynamicBaseUrl);
 
             // Upload generated PDF to S3
             const pdfFileName = `certificates/${certificateId}.pdf`;
