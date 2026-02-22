@@ -7,6 +7,7 @@ import { useEffect, useState, useRef } from 'react'
 import { cn } from "@/lib/utils"
 import { signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { EncryptedText } from "@/components/ui/encrypted-text"
 
 export default function LandingContent({ session }: { session: any }) {
     const [isScrolled, setIsScrolled] = useState(false)
@@ -224,7 +225,12 @@ export default function LandingContent({ session }: { session: any }) {
                         <motion.h1 variants={fadeUp} className="max-w-5xl text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.1] text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-500 pb-3">
                             Automate Certificate<br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-neon-primary)] to-[var(--color-neon-secondary)]">
-                                Generation at Scale
+                                <EncryptedText
+                                    text="Generation at Scale"
+                                    revealDelayMs={100}
+                                    flipDelayMs={100}
+                                    encryptedClassName="opacity-50 font-mono"
+                                />
                             </span>
                         </motion.h1>
 
