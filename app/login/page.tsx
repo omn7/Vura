@@ -76,7 +76,7 @@ function LoginContent() {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             className="w-full mt-1 bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-xl py-3 px-4 focus:ring-2 focus:ring-[var(--color-neon-primary)] outline-none"
-                            placeholder="john@example.com"
+                            placeholder="name@example.com"
                         />
                     </div>
                     <div className="text-left">

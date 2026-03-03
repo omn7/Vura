@@ -238,7 +238,7 @@ export default function LandingContent({ session }: { session: any }) {
                         {/* Badge */}
                         <motion.div variants={fadeUp} className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[var(--color-neon-border)] bg-[rgba(10,10,10,0.5)] backdrop-blur-md text-xs text-[var(--color-neon-muted)] shadow-lg hover:border-[var(--color-neon-primary)]/50 transition-colors cursor-pointer">
                             <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-neon-primary)] animate-pulse inline-block shadow-[0_0_8px_#00e599]"></span>
-                            Now with Google OAuth & Custom Credentials
+                            Now with API Key · Create &amp; Verify certs programmatically
                             <ChevronRight className="w-3 h-3" />
                         </motion.div>
 
@@ -256,7 +256,7 @@ export default function LandingContent({ session }: { session: any }) {
                         </motion.h1>
 
                         <motion.p variants={fadeUp} className="mt-6 text-lg md:text-xl text-[var(--color-neon-muted)] max-w-2xl leading-relaxed">
-                            Upload an Excel sheet, drop your PDF template, and Vura bulk-generates verifiable certificates with unique QR codes in seconds — no code required.
+                            Upload an Excel sheet, drop your PDF template, and Vura bulk-generates verifiable certificates with unique QR codes — or use the API to integrate certificate issuance directly into your own systems.
                         </motion.p>
 
                         {/* CTA Buttons */}
@@ -304,79 +304,129 @@ export default function LandingContent({ session }: { session: any }) {
                         </motion.p>
                     </motion.div>
 
-                    {/* Floating UI Preview */}
+                    {/* ── Hero Preview — Certificate Cards ── */}
                     <motion.div
-                        initial={{ opacity: 0, y: 100 }}
+                        initial={{ opacity: 0, y: 80 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
-                        className="relative z-10 mt-20 w-full max-w-5xl mx-auto floating"
+                        className="relative z-10 mt-20 w-full max-w-5xl mx-auto"
                     >
-                        <div className="rounded-2xl shadow-[0_40px_100px_rgba(0,0,0,0.6)] border border-[#333333] overflow-hidden bg-[#1a1a1a] backdrop-blur-xl">
-                            {/* MacBook style Title Bar */}
-                            <div className="h-10 bg-[#2a2a2a]/80 backdrop-blur-md flex items-center px-4 border-b border-[#333333] relative">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]"></div>
-                                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]"></div>
-                                    <div className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]"></div>
+                        {/* Browser chrome */}
+                        <div className="rounded-2xl shadow-[0_50px_120px_rgba(0,0,0,0.75)] border border-[#2a2a2a] overflow-hidden bg-[#111]">
+                            <div className="h-11 bg-[#1c1c1c] flex items-center px-4 border-b border-[#2a2a2a] relative">
+                                <div className="flex gap-2 items-center">
+                                    <div className="w-3 h-3 rounded-full bg-[#ff5f56] shadow-[0_0_6px_rgba(255,95,86,0.5)]" />
+                                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-[0_0_6px_rgba(255,189,46,0.5)]" />
+                                    <div className="w-3 h-3 rounded-full bg-[#27c93f] shadow-[0_0_6px_rgba(39,201,63,0.5)]" />
                                 </div>
-                                <div className="absolute left-1/2 -translate-x-1/2 text-xs font-medium text-[#888888] flex items-center gap-2">
-                                    <ShieldCheck className="w-3.5 h-3.5" /> vura-secure-dashboard.app
+                                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 bg-[#0d0d0d] border border-[#333] rounded-md px-4 py-1 text-[11px] text-[#555]">
+                                    <ShieldCheck className="w-3 h-3 text-[var(--color-neon-primary)]" />
+                                    vurakit.vercel.app — Certified
                                 </div>
                             </div>
 
-                            {/* Window Content */}
-                            <div className="p-8 pb-10 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] relative">
-                                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[var(--color-neon-secondary)] via-[var(--color-neon-primary)] to-[var(--color-neon-purple)] opacity-30"></div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                    {["CERT-A1B2C3D4", "CERT-E5F6G7H8", "CERT-I9J0K1L2"].map((id, i) => (
+                            {/* Cards stage */}
+                            <div className="relative bg-gradient-to-b from-[#0a0a0a] to-[#050505] px-10 py-14 overflow-hidden">
+                                {/* Subtle radial glow behind cards */}
+                                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_60%,rgba(0,229,153,0.06)_0%,transparent_65%)] pointer-events-none" />
+                                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_60%,rgba(157,78,221,0.05)_0%,transparent_55%)] pointer-events-none" />
+
+                                {/* Grid line pattern */}
+                                <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
+
+                                <div className="relative flex items-center justify-center gap-5">
+                                    {[
+                                        { name: "Shivam Murkute", initials: "SM", course: "Next.js Architecture", id: "CERT-A1B2C3D4", date: "Jan 12, 2026", rotate: "-rotate-[4deg]", z: "z-0", scale: "scale-[0.92]", top: "translate-y-4" },
+                                        { name: "Om Narkhede", initials: "ON", course: "Full-Stack Engineering", id: "CERT-E5F6G7H8", date: "Feb 03, 2026", rotate: "rotate-0", z: "z-10", scale: "scale-100", top: "-translate-y-2" },
+                                        { name: "Swayam Polakhare", initials: "SP", course: "Cloud & DevOps", id: "CERT-I9J0K1L2", date: "Mar 04, 2026", rotate: "rotate-[4deg]", z: "z-0", scale: "scale-[0.92]", top: "translate-y-4" },
+                                    ].map((cert, i) => (
                                         <motion.div
-                                            key={id}
-                                            whileHover={{ scale: 1.05, translateY: -5 }}
-                                            className={cn(
-                                                "relative bg-[#0d0d0d] bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.02)_0%,transparent_100%)] border-[4px] border-[#2a2a2a] rounded-lg p-5 flex flex-col items-center text-center shadow-[0_20px_40px_rgba(0,0,0,0.9)] overflow-hidden min-h-[190px]",
-                                                i === 1 ? "floating-delayed" : "floating"
-                                            )}
+                                            key={cert.id}
+                                            whileHover={{ scale: 1.04, translateY: -8, rotate: 0, zIndex: 20 }}
+                                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                            className={`relative flex-1 max-w-[320px] min-w-0 ${cert.rotate} ${cert.scale} ${cert.top} ${cert.z} cursor-pointer`}
+                                            style={{
+                                                filter: i !== 1 ? "brightness(0.75) saturate(0.6)" : "brightness(1)",
+                                            }}
                                         >
-                                            {/* Outer Glow on hover */}
-                                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[radial-gradient(circle_at_center,rgba(157,78,221,0.1),transparent_70%)] pointer-events-none"></div>
+                                            {/* Card */}
+                                            <div className="relative rounded-xl overflow-hidden border border-[#3a3028] shadow-[0_25px_60px_rgba(0,0,0,0.9)]"
+                                                style={{ background: "linear-gradient(145deg,#1a1510 0%,#0d0d0d 50%,#111009 100%)" }}>
 
-                                            {/* Inner Elegant Gold Border */}
-                                            <div className="absolute inset-1.5 border border-[#c5a059]/40 rounded-sm pointer-events-none mix-blend-screen"></div>
-                                            <div className="absolute inset-2 border-[0.5px] border-[#c5a059]/20 rounded-sm pointer-events-none"></div>
+                                                {/* Gold shimmer top bar */}
+                                                <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#c5a059] to-transparent opacity-60" />
 
-                                            <div className="text-[6px] font-bold text-[#c5a059] uppercase tracking-[0.3em] mt-1 mb-3">Certificate of Completion</div>
+                                                {/* Inner gold border */}
+                                                <div className="absolute inset-[6px] rounded-lg border border-[#c5a059]/20 pointer-events-none" />
+                                                <div className="absolute inset-[8px] rounded-md border border-[#c5a059]/10 pointer-events-none" />
 
-                                            <div className="text-[7px] italic text-[#888888] mb-1">This is to certify that</div>
-                                            <div className="text-lg font-bold text-white font-serif mb-1 leading-tight tracking-wide drop-shadow-md">{["Aarav Patel", "Priya Sharma", "Rohan Gupta"][i]}</div>
-                                            <div className="text-[7px] text-[#888888] mb-3 leading-none">has successfully completed the requirements for</div>
+                                                <div className="px-6 py-5">
+                                                    {/* Header row */}
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <div className="text-[8px] font-bold text-[#c5a059] uppercase tracking-[0.25em]">Certificate of Completion</div>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shadow-[0_0_8px_rgba(0,229,153,0.6)] ${i === 1 ? "bg-[var(--color-neon-primary)]" : "bg-[#1a1a1a] border border-[#333]"}`}>
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-current opacity-80" style={{ color: i === 1 ? "#000" : "#00e599" }} />
+                                                        </div>
+                                                    </div>
 
-                                            <div className="text-xs font-bold text-[var(--color-neon-primary)] mb-auto tracking-widest uppercase leading-none bg-[var(--color-neon-primary)]/10 px-3 py-1.5 rounded border border-[var(--color-neon-primary)]/20 shadow-[0_0_10px_rgba(0,229,153,0.1)]">Next.js Architecture</div>
+                                                    {/* Recipient */}
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#c5a059]/30 to-[#c5a059]/10 border border-[#c5a059]/40 flex items-center justify-center shrink-0">
+                                                            <span className="text-[9px] font-black text-[#c5a059]">{cert.initials}</span>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-[8px] text-[#666] italic mb-0.5">This certifies that</div>
+                                                            <div className="text-sm font-bold text-white leading-tight">{cert.name}</div>
+                                                        </div>
+                                                    </div>
 
-                                            <div className="w-full flex justify-between items-end mt-5 pt-3 border-t border-[#333333] relative z-10">
-                                                <div className="flex flex-col items-start translate-y-1">
-                                                    <div className="h-[0.5px] w-10 bg-[#555555] mb-1.5 shadow-sm"></div>
-                                                    <div className="text-[4.5px] text-[#888888] uppercase tracking-wider">Issue Date</div>
-                                                    <div className="text-[6px] font-medium text-[#cccccc]">Oct 24, 2023</div>
-                                                </div>
+                                                    {/* Course badge */}
+                                                    <div className="text-[9px] font-bold text-[var(--color-neon-primary)] uppercase tracking-widest bg-[var(--color-neon-primary)]/8 border border-[var(--color-neon-primary)]/20 rounded px-3 py-1.5 text-center mb-4 shadow-[0_0_12px_rgba(0,229,153,0.08)]">
+                                                        {cert.course}
+                                                    </div>
 
-                                                {/* Premium Gold Ribbon Seal */}
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#ffd700] via-[#daa520] to-[#b8860b] flex items-center justify-center shadow-[0_0_15px_rgba(218,165,32,0.4)] absolute left-1/2 -translate-x-1/2 bottom-[-8px] ring-2 ring-[#0d0d0d]">
-                                                    <div className="w-8 h-8 rounded-full border-[0.5px] border-[#fff8dc]/70 border-dashed flex items-center justify-center bg-gradient-to-tr from-[#b8860b] to-[#ffd700]">
-                                                        <ShieldCheck className="w-4 h-4 text-[#fff8dc] drop-shadow-sm" />
+                                                    {/* Footer */}
+                                                    <div className="flex items-center justify-between pt-3 border-t border-[#2a2a2a] relative">
+                                                        <div>
+                                                            <div className="text-[7px] text-[#555] uppercase tracking-wider mb-0.5">Issued</div>
+                                                            <div className="text-[9px] text-[#aaa] font-medium">{cert.date}</div>
+                                                        </div>
+
+                                                        {/* Wax seal */}
+                                                        <div className="absolute left-1/2 -translate-x-1/2 -bottom-1">
+                                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ffd700] via-[#daa520] to-[#9a6f00] flex items-center justify-center shadow-[0_0_14px_rgba(218,165,32,0.5)] ring-[3px] ring-[#0d0d0d]">
+                                                                <ShieldCheck className="w-3.5 h-3.5 text-[#fff8dc] drop-shadow" />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="text-right">
+                                                            <div className="text-[7px] text-[#555] uppercase tracking-wider mb-0.5">ID</div>
+                                                            <div className="text-[8px] font-mono text-[#888]">{cert.id}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex flex-col items-end translate-y-1">
-                                                    <div className="h-[0.5px] w-10 bg-[#555555] mb-1.5 shadow-sm"></div>
-                                                    <div className="text-[4.5px] text-[#888888] uppercase tracking-wider">Verifier ID</div>
-                                                    <div className="text-[6px] font-mono text-[#cccccc]">{id}</div>
-                                                </div>
+                                                {/* Bottom shimmer */}
+                                                <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#c5a059]/30 to-transparent" />
                                             </div>
                                         </motion.div>
                                     ))}
                                 </div>
+
+                                {/* Bottom tag */}
+                                <div className="flex items-center justify-center gap-3 mt-10">
+                                    <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#2a2a2a]" />
+                                    <div className="flex items-center gap-2 text-[11px] text-[#444]">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-neon-primary)] shadow-[0_0_6px_#00e599] animate-pulse" />
+                                        Certificates generated and verified in real-time
+                                    </div>
+                                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#2a2a2a]" />
+                                </div>
                             </div>
                         </div>
+
+                        {/* Outer glow halo */}
+                        <div className="absolute -inset-1 rounded-2xl bg-[radial-gradient(ellipse_at_50%_0%,rgba(0,229,153,0.12),transparent_55%)] pointer-events-none" />
                     </motion.div>
                 </section>
 
@@ -420,12 +470,14 @@ export default function LandingContent({ session }: { session: any }) {
                             <p className="mt-4 text-[var(--color-neon-muted)] max-w-xl mx-auto">Vura is designed to stay out of your way — powerful under the hood, effortless on the surface.</p>
                         </motion.div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {[
                                 { icon: <Zap className="w-6 h-6 text-[var(--color-neon-primary)]" />, title: "Bulk Generation", desc: "Process thousands of rows from Excel (.xlsx) into pristine PDFs in seconds.", color: "rgba(0,229,153,0.1)", border: "rgba(0,229,153,0.3)" },
                                 { icon: <ShieldCheck className="w-6 h-6 text-[var(--color-neon-purple)]" />, title: "Unique Verification IDs", desc: "Unforgeable CERT-XXXX identifiers embedded in each document and QR code.", color: "rgba(157,78,221,0.1)", border: "rgba(157,78,221,0.3)" },
                                 { icon: <Database className="w-6 h-6 text-[#007acc]" />, title: "Instant Verification", desc: "Anyone can scan the QR code to view a public authenticity page in real-time.", color: "rgba(0,122,204,0.1)", border: "rgba(0,122,204,0.3)" },
                                 { icon: <Cloud className="w-6 h-6 text-[#e0aaff]" />, title: "Secure Cloud Storage", desc: "All generated assets automatically stored in AWS S3, metadata in Neon Postgres.", color: "rgba(224,170,255,0.1)", border: "rgba(224,170,255,0.3)" },
+                                { icon: <Key className="w-6 h-6 text-amber-400" />, title: "API Access", desc: "Generate certificates from any system using your secret API key. Works with OpenClaw, Zapier, Telegram bots, and more.", color: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.3)" },
+                                { icon: <Activity className="w-6 h-6 text-rose-400" />, title: "Usage Analytics", desc: "Track every API call — endpoint, status, certificate ID, timestamp — in your personal usage dashboard.", color: "rgba(251,113,133,0.1)", border: "rgba(251,113,133,0.3)" },
                             ].map((f, i) => (
                                 <motion.div
                                     key={f.title}
@@ -465,9 +517,9 @@ export default function LandingContent({ session }: { session: any }) {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
                             <div className="absolute top-10 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-px bg-gradient-to-r from-transparent via-[var(--color-neon-border)] to-transparent hidden md:block"></div>
                             {[
-                                { n: "01", title: "Upload Template", desc: "Drop your blank PDF certificate design. Drag markers to set exact text positions for name, course, and date." },
-                                { n: "02", title: "Map Your Data", desc: "Upload an Excel file with columns: Name, Course, IssueDate. Vura reads every row automatically." },
-                                { n: "03", title: "Generate & Share", desc: "Click generate. Vura builds, uploads to S3, and provides direct PDF links for every certificate instantly." },
+                                { n: "01", title: "Upload Template", desc: "Drop your blank PDF certificate design. Markers are placed automatically for name, course, and date fields." },
+                                { n: "02", title: "Map Your Data", desc: "Upload an Excel file with columns: Name, Course, IssueDate. Or call the API to send individual recipient data programmatically." },
+                                { n: "03", title: "Generate, Share & Verify", desc: "Click generate (or call POST /api/certificates/create). Vura builds, uploads to S3, and returns direct PDF + public verify links instantly." },
                             ].map((s, i) => (
                                 <motion.div
                                     key={s.n}
@@ -515,7 +567,7 @@ export default function LandingContent({ session }: { session: any }) {
                                     <p className="text-sm text-[var(--color-neon-muted)] mt-1">No credit card required</p>
                                 </div>
                                 <ul className="flex flex-col gap-3 my-4">
-                                    {["Up to 100 certificates/month", "Google & Email login", "S3 cloud storage", "QR verification links", "Dashboard access"].map(f => (
+                                    {["Up to 100 certificates/month", "Google & Email login", "S3 cloud storage", "QR verification links", "API access + secret key", "Usage stats dashboard"].map(f => (
                                         <li key={f} className="flex items-center gap-3 text-sm text-[var(--color-neon-text)]"><CheckCircle className="w-4 h-4 text-[var(--color-neon-primary)] shrink-0" />{f}</li>
                                     ))}
                                 </ul>
