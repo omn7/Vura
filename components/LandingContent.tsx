@@ -87,7 +87,9 @@ export default function LandingContent({ session }: { session: any }) {
                         <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
                         <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
                         <Link href="/about" className="hover:text-white transition-colors flex items-center gap-1">About</Link>
+                        <Link href="/docs" className="hover:text-white transition-colors flex items-center gap-1 text-[var(--color-neon-primary)]">API Docs</Link>
                     </nav>
+
 
                     {/* CTA */}
                     <div className="flex items-center gap-4">

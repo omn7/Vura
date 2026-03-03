@@ -18,6 +18,7 @@ model Certificate {
   issueDate     String
   templateUrl   String
   pdfUrl        String
+  revoked       Boolean  @default(false)
   createdAt     DateTime @default(now())
 
   // Relation to User
