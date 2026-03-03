@@ -15,31 +15,30 @@ const bricolage = Bricolage_Grotesque({
 
 export const metadata: Metadata = {
   title: 'Vura - Bulk Certificate Generation Platform',
-  description: 'Automate Certificate Generation at Scale. Create, distribute, and verify certificates with ease using Vura.',
-  keywords: ['Certificate Generator', 'Bulk Certificates', 'Next.js', 'Automated PDF Generation', 'Online Certificates'],
-  authors: [{ name: 'Om Narkhede', url: 'https://omnarkhede.tech' }],
-  creator: 'Om Narkhede',
+  description: 'Automate Certificate Generation at Scale. Create, distribute, and verify certificates with ease with unique QR codes and API access.',
+  keywords: ['Certificate Generator', 'Bulk Certificates', 'Next.js', 'API Integration', 'Automated PDF Generation', 'Secure Verification'],
+  authors: [{ name: 'Vura Team' }],
+  creator: 'Vura Team',
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://vura.app',
-    title: 'Vura - Bulk Certificate Generation Platform',
-    description: 'Upload an Excel sheet, drop your PDF template, and Vura bulk-generates verifiable certificates in seconds.',
+    url: 'https://vurakit.vercel.app',
+    title: 'Vura | Automate Certificate Generation at Scale',
+    description: 'Bulk-generate verifiable certificates in seconds via Excel or API. Secure, QR-powered, and high-performance.',
     siteName: 'Vura',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Vura - Automate Certificate Generation at Scale',
+        alt: 'Vura - Bulk Certificate Generation Preview',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Vura - Bulk Certificate Generation Platform',
-    description: 'Automate Certificate Generation at Scale. Create, distribute, and verify certificates with ease.',
-    creator: '@mr_codex',
+    title: 'Vura | Automate Certificate Generation at Scale',
+    description: 'Bulk-generate verifiable certificates in seconds via Excel or API. Secure, QR-powered verification included.',
     images: ['/og-image.png'],
   },
 }
