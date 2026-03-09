@@ -80,7 +80,10 @@ function LoginContent() {
                         />
                     </div>
                     <div className="text-left">
-                        <label className="text-xs text-[var(--color-neon-muted)] ml-1">Password</label>
+                        <div className="flex justify-between items-center ml-1">
+                            <label className="text-xs text-[var(--color-neon-muted)]">Password</label>
+                            <Link href="/forgot-password" className="text-xs text-[var(--color-neon-primary)] hover:underline mb-1">Forgot password?</Link>
+                        </div>
                         <input
                             type="password"
                             required
