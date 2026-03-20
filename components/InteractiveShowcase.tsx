@@ -198,19 +198,20 @@ export default function InteractiveShowcase() {
 
     return (
         <div
-            className="relative w-full h-[450px] flex items-center justify-center lg:ml-8"
+            className="relative w-full flex flex-col lg:flex-row items-center justify-center lg:h-[450px] lg:-mt-32 gap-6 lg:gap-0"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            {/* Center Vertical Nav Pill */}
-            <div className="relative z-20 flex flex-col items-center gap-2 bg-[rgba(20,20,20,0.6)] backdrop-blur-xl border border-white/10 rounded-[2rem] p-2 py-3 shadow-2xl">
+            {/* Center Vertical Nav Pill -> Horizontal on mobile */}
+            <div className="relative z-20 w-[95%] sm:w-auto flex flex-row lg:flex-col items-center gap-2 bg-[rgba(20,20,20,0.6)] backdrop-blur-xl border border-white/10 rounded-full lg:rounded-[2rem] p-2 lg:py-3 shadow-2xl overflow-x-auto no-scrollbar">
 
                 {/* Vura Logo at Top */}
-                <div className="w-10 h-10 rounded-full bg-[var(--color-neon-primary)] flex items-center justify-center shadow-[0_0_15px_rgba(0,229,153,0.3)] mb-2 mt-1 shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-neon-primary)] flex items-center justify-center shadow-[0_0_15px_rgba(0,229,153,0.3)] shrink-0 lg:mb-2 lg:mt-1">
                     <div className="w-3.5 h-3.5 bg-black rounded-[2px] rotate-45" />
                 </div>
 
-                <div className="w-6 h-[1px] bg-white/10 mb-2" />
+                <div className="hidden lg:block w-6 h-[1px] bg-white/10 lg:mb-2" />
+                <div className="lg:hidden h-6 w-[1px] bg-white/10 mx-1 shrink-0" />
 
                 {TABS.map((tab, idx) => {
                     const isActive = idx === activeIndex
@@ -238,13 +239,13 @@ export default function InteractiveShowcase() {
                 })}
                 
                 {/* Decorative Avatar to increase height */}
-                <div className="w-12 h-12 flex items-center justify-center shrink-0 mt-1">
+                <div className="hidden lg:flex w-12 h-12 items-center justify-center shrink-0 mt-1">
                     <img src="https://i.pravatar.cc/150?img=11" alt="User Avatar" className="w-8 h-8 rounded-full border-[1.5px] border-[var(--color-neon-primary)]/40 object-cover pointer-events-none shadow-[0_0_10px_rgba(0,229,153,0.2)]" />
                 </div>
             </div>
 
-            {/* Left Floating Card */}
-            <div className="absolute left-0 lg:left-auto lg:right-[calc(50%+44px)] xl:right-[calc(50%+48px)] z-10 origin-right">
+            {/* Left Floating Card -> Stacked top on mobile */}
+            <div className="relative lg:absolute lg:right-[calc(50%+44px)] xl:right-[calc(50%+48px)] z-10 lg:origin-right w-full lg:w-auto flex justify-center">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={`left-${activeTab.id}`}
@@ -259,8 +260,8 @@ export default function InteractiveShowcase() {
                 </AnimatePresence>
             </div>
 
-            {/* Right Floating Card */}
-            <div className="absolute right-0 lg:right-auto lg:left-[calc(50%+44px)] xl:left-[calc(50%+48px)] z-10 origin-left">
+            {/* Right Floating Card -> Stacked bottom on mobile */}
+            <div className="relative lg:absolute lg:left-[calc(50%+44px)] xl:left-[calc(50%+48px)] z-10 lg:origin-left w-full lg:w-auto flex justify-center">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={`right-${activeTab.id}`}

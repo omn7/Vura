@@ -79,7 +79,7 @@ export default function LandingContent({ session }: { session: any }) {
                             <AnimatePresence>
                                 {isSearchOpen && (
                                     <motion.div initial={{ opacity: 0, y: 8, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.96 }} transition={{ duration: 0.15 }}
-                                        className="absolute right-0 top-full mt-2 w-[320px] rounded-2xl bg-[rgba(10,10,10,0.95)] backdrop-blur-2xl border border-[var(--color-neon-border)] shadow-[0_8px_32px_rgba(0,0,0,0.8)] p-2 z-50 origin-top-right">
+                                        className="absolute right-0 top-full mt-2 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl bg-[rgba(10,10,10,0.95)] backdrop-blur-2xl border border-[var(--color-neon-border)] shadow-[0_8px_32px_rgba(0,0,0,0.8)] p-2 z-50 origin-top-right">
                                         <form onSubmit={(e) => { e.preventDefault(); if (searchId.trim()) router.push(`/verify/${searchId.trim()}`) }} className="relative flex items-center">
                                             <div className="absolute left-3 pointer-events-none"><QrCode className="w-4 h-4 text-[var(--color-neon-primary)] opacity-70" /></div>
                                             <input type="text" autoFocus value={searchId} onChange={(e) => setSearchId(e.target.value)} placeholder="Enter Certificate ID..."
@@ -93,12 +93,12 @@ export default function LandingContent({ session }: { session: any }) {
                             </AnimatePresence>
                         </div>
                         <a href="https://github.com/omn7/Vura" target="_blank" rel="noreferrer"
-                            className="hidden sm:flex items-center gap-2 text-sm text-[var(--color-neon-muted)] hover:text-white transition-colors border-r border-[var(--color-neon-border)] pr-4">
+                            className="hidden md:flex items-center gap-2 text-sm text-[var(--color-neon-muted)] hover:text-white transition-colors border-r border-[var(--color-neon-border)] pr-4">
                             <Github className="w-4 h-4" /> GitHub
                         </a>
                         {session ? (
                             <div className="flex items-center gap-3">
-                                <Link href="/app" className="hidden sm:flex btn-primary py-2 px-4 text-sm items-center gap-1.5">
+                                <Link href="/app" className="hidden md:flex btn-primary py-2 px-4 text-sm items-center gap-1.5">
                                     Generator <ArrowRight className="w-3.5 h-3.5" />
                                 </Link>
                                 <div className="relative" ref={profileRef}>
@@ -127,7 +127,7 @@ export default function LandingContent({ session }: { session: any }) {
                                 </div>
                             </div>
                         ) : (
-                            <div className="hidden sm:flex items-center gap-3">
+                            <div className="hidden md:flex items-center gap-3">
                                 <Link href="/login" className="text-sm text-[var(--color-neon-muted)] hover:text-white transition-colors">Sign In</Link>
                                 <Link href="/register" className="btn-primary py-2 px-5 text-sm flex items-center gap-1.5">Get Started <ArrowRight className="w-3.5 h-3.5" /></Link>
                             </div>
