@@ -1,28 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-  --color-neon-bg: #030303;
-  --color-neon-primary: #00e599;
-  --color-neon-secondary: #007acc;
-  --color-neon-purple: #9d4edd;
-  --color-neon-surface: #0a0a0a;
+  /* Core */
+  --color-neon-bg:            #030303;
+  --color-neon-primary:       #00e599;
+  --color-neon-secondary:     #007acc;
+  --color-neon-purple:        #9d4edd;
+  --color-neon-surface:       #0a0a0a;
   --color-neon-surface-hover: #141414;
-  --color-neon-border: #222222;
-  --color-neon-text: #eaeaea;
-  --color-neon-muted: #888888;
+  --color-neon-border:        #222222;
+  --color-neon-text:          #eaeaea;
+  --color-neon-muted:         #666666;
+
+  /* Aliases for components */
+  --color-primary:    #00e599;
+  --color-secondary:  #007acc;
+  --color-success:    #10b981;
+  --color-warning:    #f59e0b;
+  --color-danger:     #ef4444;
+  --color-surface:    #0a0a0a;
+  --color-surface-2:  #111111;
+  --color-border:     #222222;
 }
 
+/* ─── Base ─── */
 @layer base {
-
-  html,
-  body {
-    @apply bg-[var(--color-neon-bg)] text-[var(--color-neon-text)] antialiased min-h-screen selection:bg-[var(--color-neon-primary)] selection:text-black;
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
+
+  html, body {
+    @apply bg-[var(--color-neon-bg)] text-[var(--color-neon-text)] antialiased min-h-screen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(0, 229, 153, 0.25);
+    color: #fff;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--color-neon-bg); }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-neon-primary); }
 }
 
+/* ─── Glow Background ─── */
 .glow-bg {
   position: absolute;
   top: -10%;
@@ -35,63 +63,300 @@
   z-index: 0;
 }
 
+/* ─── Cards ─── */
 .glass-card {
-  @apply bg-[var(--color-neon-surface)] border border-[var(--color-neon-border)] rounded-2xl p-6 backdrop-blur-md;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: var(--color-neon-surface);
+  border: 1px solid var(--color-neon-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.22s ease;
 }
 
 .glass-card:hover {
-  @apply bg-[var(--color-neon-surface-hover)];
-  border-color: rgba(0, 229, 153, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 229, 153, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: var(--color-neon-surface-hover);
+  border-color: rgba(0, 229, 153, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 229, 153, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+/* Metric / Stats Card */
+.metric-card {
+  position: relative;
+  background: var(--color-neon-surface);
+  border: 1px solid var(--color-neon-border);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 153, 0.5), transparent);
+}
+
+.metric-card:hover {
+  border-color: rgba(0, 229, 153, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 229, 153, 0.05);
+}
+
+/* ─── Buttons ─── */
 .btn-primary {
   @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-black bg-[var(--color-neon-primary)] rounded-full transition-all duration-300;
-  box-shadow: 0 0 15px rgba(0, 229, 153, 0.4);
+  box-shadow: 0 0 18px rgba(0, 229, 153, 0.4);
 }
 
 .btn-primary:hover {
-  @apply bg-[#00ffaa];
-  box-shadow: 0 0 25px rgba(0, 229, 153, 0.6);
+  background: #00ffaa;
+  box-shadow: 0 0 28px rgba(0, 229, 153, 0.65);
   transform: translateY(-1px);
 }
 
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-secondary {
-  @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-white bg-transparent border border-[var(--color-neon-border)] rounded-full transition-all duration-300;
+  @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-[var(--color-neon-muted)] bg-transparent border border-[var(--color-neon-border)] rounded-full transition-all duration-300;
 }
 
 .btn-secondary:hover {
-  @apply border-[var(--color-neon-primary)] bg-[#00e599]/[0.05];
+  border-color: var(--color-neon-primary);
+  background: rgba(0, 229, 153, 0.08);
+  color: var(--color-neon-primary);
+  box-shadow: 0 0 20px rgba(0, 229, 153, 0.2);
+  transform: translateY(-1px);
 }
 
-/* ─── Animated Backgrounds ─── */
+.btn-ghost {
+  @apply relative inline-flex items-center justify-center px-4 py-2 text-[var(--color-neon-muted)] bg-transparent rounded-xl transition-all duration-200;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-neon-text);
+}
+
+.btn-danger {
+  @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-white bg-transparent border border-red-500/30 rounded-full transition-all duration-300 text-red-400;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+/* ─── Input / Form ─── */
+.vura-input {
+  @apply w-full bg-[var(--color-neon-surface)] border border-[var(--color-neon-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-neon-text)] placeholder-[var(--color-neon-muted)] transition-all duration-200;
+  outline: none;
+}
+
+.vura-input:focus {
+  border-color: var(--color-neon-primary);
+  box-shadow: 0 0 0 3px rgba(0, 229, 153, 0.1);
+}
+
+/* ─── Upload Dropzone ─── */
+.dropzone {
+  @apply relative border-2 border-dashed border-[var(--color-neon-border)] rounded-2xl transition-all duration-300 cursor-pointer flex flex-col items-center justify-center text-center;
+  background: rgba(10, 10, 10, 0.6);
+}
+
+.dropzone:hover, .dropzone.active {
+  border-color: var(--color-neon-primary);
+  background: rgba(0, 229, 153, 0.03);
+  box-shadow: 0 0 20px rgba(0, 229, 153, 0.08) inset;
+}
+
+.dropzone.filled {
+  border-color: rgba(0, 229, 153, 0.5);
+  background: rgba(0, 229, 153, 0.05);
+}
+
+/* ─── Status Badges ─── */
+.badge-valid {
+  @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold;
+  background: rgba(0, 229, 153, 0.12);
+  border: 1px solid rgba(0, 229, 153, 0.35);
+  color: #00e599;
+  box-shadow: 0 0 16px rgba(0, 229, 153, 0.15);
+}
+
+.badge-invalid {
+  @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.15);
+}
+
+.badge-pill {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border;
+}
+
+.badge-green {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.badge-blue {
+  background: rgba(0, 122, 204, 0.12);
+  border-color: rgba(0, 122, 204, 0.3);
+  color: #007acc;
+}
+
+.badge-purple {
+  background: rgba(157, 78, 221, 0.12);
+  border-color: rgba(157, 78, 221, 0.3);
+  color: #9d4edd;
+}
+
+/* ─── Data Table ─── */
+.data-table {
+  @apply w-full text-sm border-collapse;
+}
+
+.data-table thead tr {
+  border-bottom: 1px solid var(--color-neon-border);
+}
+
+.data-table th {
+  @apply text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-[var(--color-neon-muted)];
+}
+
+.data-table td {
+  @apply px-4 py-3.5 text-[var(--color-neon-text)];
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid rgba(34, 34, 34, 0.6);
+  transition: background 0.15s ease;
+}
+
+.data-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+/* ─── Background Patterns ─── */
 .bg-grid-pattern {
   background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
   -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
 }
 
+.bg-dot-pattern {
+  background-image: radial-gradient(circle, rgba(0, 229, 153, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ─── Animations ─── */
 .floating {
   animation: floating 6s ease-in-out infinite;
 }
 
 .floating-delayed {
-  animation: floating 6s ease-in-out 3s infinite;
+  animation: floating 6s ease-in-out 2s infinite;
+}
+
+.floating-slow {
+  animation: floating 9s ease-in-out 1s infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
 }
 
 @keyframes floating {
-  0% {
-    transform: translateY(0px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-14px); }
+}
 
-  50% {
-    transform: translateY(-15px);
-  }
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
 
-  100% {
-    transform: translateY(0px);
-  }
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease forwards;
+}
+
+/* ─── AI / Highlight Panel ─── */
+.glow-panel {
+  position: relative;
+  background: linear-gradient(135deg, rgba(0, 229, 153, 0.06), rgba(157, 78, 221, 0.06));
+  border: 1px solid rgba(0, 229, 153, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(0, 229, 153, 0.06), 0 0 80px rgba(157, 78, 221, 0.04), inset 0 1px 0 rgba(0, 229, 153, 0.08);
+}
+
+.glow-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0, 229, 153, 0.1), transparent 60%);
+  pointer-events: none;
+}
+
+/* ─── Section label ─── */
+.section-label {
+  @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border;
+  background: rgba(0, 229, 153, 0.08);
+  border-color: rgba(0, 229, 153, 0.25);
+  color: var(--color-neon-primary);
+}
+
+/* ─── Config input (generator page) ─── */
+.config-input {
+  @apply w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-neon-text)] outline-none transition-all;
+}
+
+.config-input:focus {
+  border-color: var(--color-neon-primary);
 }

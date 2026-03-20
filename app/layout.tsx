@@ -1,16 +1,11 @@
 import type { Metadata } from 'next'
-import { Outfit, Bricolage_Grotesque } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { ReactNode } from 'react'
 
-const outfit = Outfit({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-outfit',
-})
-
-const bricolage = Bricolage_Grotesque({
-  subsets: ['latin'],
-  variable: '--font-bricolage',
+  variable: '--font-jakarta',
 })
 
 export const metadata: Metadata = {
@@ -52,7 +47,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${bricolage.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${jakarta.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>
           <div className="relative min-h-screen flex flex-col overflow-x-hidden">
             {children}
