@@ -19,8 +19,16 @@ export async function generateCertificate(
     const pages = pdfDoc.getPages()
     const firstPage = pages[0]
 
-    // Embed font to calculate string widths for perfect centering
-    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    // Embed basic fonts to support varied typography requests
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    const helveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique)
+
+    const getFont = (style?: string) => {
+        if (style === 'normal') return helvetica;
+        if (style === 'italic') return helveticaOblique;
+        return helveticaBold; // default to bold for backward compatibility
+    }
 
     // Dimensions of the first page to compute placements
     const { width, height } = firstPage.getSize()
@@ -45,14 +53,15 @@ export async function generateCertificate(
     if (!settings || settings?.name?.enabled) {
         const textToDraw = data.name;
         const fontSize = settings ? settings.name.size : 32;
-        const textWidth = font.widthOfTextAtSize(textToDraw, fontSize);
+        const fontToUse = settings ? getFont(settings.name.fontStyle) : helveticaBold;
+        const textWidth = fontToUse.widthOfTextAtSize(textToDraw, fontSize);
         const startX = settings ? getX(settings.name.x) : centerX;
 
         firstPage.drawText(textToDraw, {
             x: startX - (textWidth / 2),
             y: settings ? getY(settings.name.y) : height / 2 + 50,
             size: fontSize,
-            font: font,
+            font: fontToUse,
             color: settings ? hexToRgb(settings.name.hex) : rgb(0, 0, 0),
         })
     }
@@ -61,14 +70,15 @@ export async function generateCertificate(
     if (!settings || settings?.course?.enabled) {
         const textToDraw = data.course;
         const fontSize = settings ? settings.course.size : 20;
-        const textWidth = font.widthOfTextAtSize(textToDraw, fontSize);
+        const fontToUse = settings ? getFont(settings.course.fontStyle) : helvetica;
+        const textWidth = fontToUse.widthOfTextAtSize(textToDraw, fontSize);
         const startX = settings ? getX(settings.course.x) : centerX;
 
         firstPage.drawText(textToDraw, {
             x: startX - (textWidth / 2),
             y: settings ? getY(settings.course.y) : height / 2,
             size: fontSize,
-            font: font,
+            font: fontToUse,
             color: settings ? hexToRgb(settings.course.hex) : rgb(0.2, 0.2, 0.2),
         })
     }
@@ -77,14 +87,15 @@ export async function generateCertificate(
     if (!settings || settings?.issueDate?.enabled) {
         const textToDraw = settings ? data.issueDate : `Date: ${data.issueDate}`;
         const fontSize = settings ? settings.issueDate.size : 14;
-        const textWidth = font.widthOfTextAtSize(textToDraw, fontSize);
+        const fontToUse = settings ? getFont(settings.issueDate.fontStyle) : helvetica;
+        const textWidth = fontToUse.widthOfTextAtSize(textToDraw, fontSize);
         const startX = settings ? getX(settings.issueDate.x) : centerX;
 
         firstPage.drawText(textToDraw, { // don't prefix with "Date:" if custom configured
             x: startX - (textWidth / 2),
             y: settings ? getY(settings.issueDate.y) : height / 2 - 40,
             size: fontSize,
-            font: font,
+            font: fontToUse,
             color: settings ? hexToRgb(settings.issueDate.hex) : rgb(0, 0, 0),
         })
     }

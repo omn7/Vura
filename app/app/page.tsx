@@ -15,10 +15,6 @@ const PdfPreview = dynamic(() => import('@/components/PdfPreview'), { ssr: false
 export default function Dashboard() {
     const { status } = useSession();
 
-    if (status === "unauthenticated") {
-        redirect("/login");
-    }
-
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [excelFile, setExcelFile] = useState<File | null>(null);
 
@@ -26,8 +22,17 @@ export default function Dashboard() {
     const [statusText, setStatusText] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [successCount, setSuccessCount] = useState<number | null>(null);
-    const [saveToDb, setSaveToDb] = useState(true);
+    const [saveToDb, setSaveToDb] = useState(false);
     const [isZipping, setIsZipping] = useState(false);
+
+    useEffect(() => {
+        if (status === "authenticated" && saveToDb === false) {
+            setSaveToDb(true);
+        } else if (status === "unauthenticated") {
+            setSaveToDb(false);
+            setConfig(prev => ({ ...prev, qrCode: { ...prev.qrCode, enabled: false } }));
+        }
+    }, [status]);
 
     type Certificate = {
         certificateId: string;
@@ -54,9 +59,9 @@ export default function Dashboard() {
 
     // Advanced Configuration State (Coordinates as % of dimensions)
     const [config, setConfig] = useState({
-        name: { enabled: true, x: 50, y: 40, size: 32, hex: "#000000" },
-        course: { enabled: true, x: 50, y: 55, size: 20, hex: "#333333" },
-        issueDate: { enabled: true, x: 50, y: 65, size: 14, hex: "#000000" },
+        name: { enabled: true, x: 50, y: 40, size: 32, hex: "#000000", fontStyle: "bold" },
+        course: { enabled: true, x: 50, y: 55, size: 20, hex: "#333333", fontStyle: "normal" },
+        issueDate: { enabled: true, x: 50, y: 65, size: 14, hex: "#000000", fontStyle: "normal" },
         qrCode: { enabled: true, x: 80, y: 85, scale: 0.5 },
     });
 
@@ -199,9 +204,15 @@ export default function Dashboard() {
                     <Link href="/dashboard" className="btn-secondary py-2 px-4 flex items-center gap-2 text-sm">
                         <LayoutDashboard className="w-4 h-4" /> Gallery
                     </Link>
-                    <Link href="/api/auth/signout" className="btn-secondary py-2 px-4 flex items-center gap-2 text-sm text-red-400 hover:text-red-300 hover:border-red-400">
-                        <LogOut className="w-4 h-4" /> Sign Out
-                    </Link>
+                    {status === 'authenticated' ? (
+                        <Link href="/api/auth/signout" className="btn-secondary py-2 px-4 flex items-center gap-2 text-sm text-red-400 hover:text-red-300 hover:border-red-400">
+                            <LogOut className="w-4 h-4" /> Sign Out
+                        </Link>
+                    ) : (
+                        <Link href="/login" className="btn-primary py-2 px-4 flex items-center gap-2 text-sm">
+                            Login
+                        </Link>
+                    )}
                 </div>
             </div>
 
@@ -347,12 +358,12 @@ export default function Dashboard() {
                                 {/* Name settings */}
                                 <div className="pt-4 first:pt-0">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center space-x-3">
-                                            <span className="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]" style={{ backgroundColor: MARKER_COLORS.name }}></span>
-                                            <label className="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" checked={config.name.enabled} onChange={(e) => handleConfigChange('name', 'enabled', e.target.checked)} className="rounded border-[var(--color-neon-border)] text-[var(--color-neon-primary)] focus:ring-[var(--color-neon-primary)] bg-[var(--color-neon-bg)]" />
-                                                <span className="font-semibold" style={{ color: MARKER_COLORS.name }}>Recipient Name</span>
-                                            </label>
+                                        <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => handleConfigChange('name', 'enabled', !config.name.enabled)}>
+                                            <span className="w-3 h-3 rounded-full flex-shrink-0 transition-colors" style={{ backgroundColor: config.name.enabled ? MARKER_COLORS.name : 'var(--color-neon-surface-hover)', boxShadow: config.name.enabled ? `0 0 8px ${MARKER_COLORS.name}99` : 'none' }}></span>
+                                            <div className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors border ${config.name.enabled ? 'border-transparent' : 'border-[var(--color-neon-border)]'}`} style={{ backgroundColor: config.name.enabled ? MARKER_COLORS.name : 'transparent' }}>
+                                                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${config.name.enabled ? 'translate-x-4' : 'translate-x-1'}`} />
+                                            </div>
+                                            <span className="font-semibold transition-colors" style={{ color: config.name.enabled ? MARKER_COLORS.name : 'var(--color-neon-muted)' }}>Recipient Name</span>
                                         </div>
                                         {config.name.enabled && (
                                             <button onClick={() => setActiveTarget(activeTarget === 'name' ? null : 'name')} className={`text-xs px-3 py-1.5 rounded-lg flex items-center transition-colors ${activeTarget === 'name' ? 'bg-[var(--color-neon-primary)] text-black font-bold' : 'bg-[var(--color-neon-surface-hover)] border border-[var(--color-neon-border)] hover:border-[var(--color-neon-primary)]'}`}>
@@ -361,11 +372,10 @@ export default function Dashboard() {
                                         )}
                                     </div>
                                     {config.name.enabled && (
-                                        <div className="grid grid-cols-4 gap-4">
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">X Position (%)</label><input type="number" step="0.1" value={config.name.x} onChange={e => handleConfigChange('name', 'x', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Y Position (%)</label><input type="number" step="0.1" value={config.name.y} onChange={e => handleConfigChange('name', 'y', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Font Size</label><input type="number" value={config.name.size} onChange={e => handleConfigChange('name', 'size', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Color (Hex)</label><input type="text" value={config.name.hex} onChange={e => handleConfigChange('name', 'hex', e.target.value)} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1 font-mono uppercase" /></div>
+                                        <div className="grid grid-cols-3 gap-4 bg-black/20 p-4 rounded-xl border border-[var(--color-neon-border)]/50 mt-2">
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Font Size</label><input type="number" value={config.name.size} onChange={e => handleConfigChange('name', 'size', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm focus:border-[var(--color-neon-primary)] outline-none transition-colors" /></div>
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Style</label><select value={config.name.fontStyle} onChange={e => handleConfigChange('name', 'fontStyle', e.target.value)} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] text-[var(--color-neon-text)] rounded-lg p-2 text-sm focus:border-[var(--color-neon-primary)] outline-none transition-colors"><option value="normal">Normal</option><option value="bold">Bold</option><option value="italic">Italic</option></select></div>
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Color</label><div className="flex items-center gap-2 bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-1.5"><input type="color" value={config.name.hex} onChange={e => handleConfigChange('name', 'hex', e.target.value)} className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" /><span className="text-xs font-mono uppercase text-[var(--color-neon-muted)] truncate">{config.name.hex}</span></div></div>
                                         </div>
                                     )}
                                 </div>
@@ -373,12 +383,12 @@ export default function Dashboard() {
                                 {/* Course settings */}
                                 <div className="pt-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center space-x-3">
-                                            <span className="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]" style={{ backgroundColor: MARKER_COLORS.course }}></span>
-                                            <label className="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" checked={config.course.enabled} onChange={(e) => handleConfigChange('course', 'enabled', e.target.checked)} className="rounded border-[var(--color-neon-border)] text-[var(--color-neon-primary)] focus:ring-[var(--color-neon-primary)] bg-[var(--color-neon-bg)]" />
-                                                <span className="font-semibold" style={{ color: MARKER_COLORS.course }}>Course Name</span>
-                                            </label>
+                                        <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => handleConfigChange('course', 'enabled', !config.course.enabled)}>
+                                            <span className="w-3 h-3 rounded-full flex-shrink-0 transition-colors" style={{ backgroundColor: config.course.enabled ? MARKER_COLORS.course : 'var(--color-neon-surface-hover)', boxShadow: config.course.enabled ? `0 0 8px ${MARKER_COLORS.course}99` : 'none' }}></span>
+                                            <div className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors border ${config.course.enabled ? 'border-transparent' : 'border-[var(--color-neon-border)]'}`} style={{ backgroundColor: config.course.enabled ? MARKER_COLORS.course : 'transparent' }}>
+                                                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${config.course.enabled ? 'translate-x-4' : 'translate-x-1'}`} />
+                                            </div>
+                                            <span className="font-semibold transition-colors" style={{ color: config.course.enabled ? MARKER_COLORS.course : 'var(--color-neon-muted)' }}>Course Name</span>
                                         </div>
                                         {config.course.enabled && (
                                             <button onClick={() => setActiveTarget(activeTarget === 'course' ? null : 'course')} className={`text-xs px-3 py-1.5 rounded-lg flex items-center transition-colors ${activeTarget === 'course' ? 'bg-[var(--color-neon-primary)] text-black font-bold' : 'bg-[var(--color-neon-surface-hover)] border border-[var(--color-neon-border)] hover:border-[var(--color-neon-primary)]'}`}>
@@ -387,11 +397,10 @@ export default function Dashboard() {
                                         )}
                                     </div>
                                     {config.course.enabled && (
-                                        <div className="grid grid-cols-4 gap-4">
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">X Position (%)</label><input type="number" step="0.1" value={config.course.x} onChange={e => handleConfigChange('course', 'x', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Y Position (%)</label><input type="number" step="0.1" value={config.course.y} onChange={e => handleConfigChange('course', 'y', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Font Size</label><input type="number" value={config.course.size} onChange={e => handleConfigChange('course', 'size', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Color (Hex)</label><input type="text" value={config.course.hex} onChange={e => handleConfigChange('course', 'hex', e.target.value)} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1 font-mono uppercase" /></div>
+                                        <div className="grid grid-cols-3 gap-4 bg-black/20 p-4 rounded-xl border border-[var(--color-neon-border)]/50 mt-2">
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Font Size</label><input type="number" value={config.course.size} onChange={e => handleConfigChange('course', 'size', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm focus:border-[var(--color-neon-primary)] outline-none transition-colors" /></div>
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Style</label><select value={config.course.fontStyle} onChange={e => handleConfigChange('course', 'fontStyle', e.target.value)} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] text-[var(--color-neon-text)] rounded-lg p-2 text-sm focus:border-[var(--color-neon-primary)] outline-none transition-colors"><option value="normal">Normal</option><option value="bold">Bold</option><option value="italic">Italic</option></select></div>
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Color</label><div className="flex items-center gap-2 bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-1.5"><input type="color" value={config.course.hex} onChange={e => handleConfigChange('course', 'hex', e.target.value)} className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" /><span className="text-xs font-mono uppercase text-[var(--color-neon-muted)] truncate">{config.course.hex}</span></div></div>
                                         </div>
                                     )}
                                 </div>
@@ -399,12 +408,12 @@ export default function Dashboard() {
                                 {/* Issue Date settings */}
                                 <div className="pt-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center space-x-3">
-                                            <span className="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.6)]" style={{ backgroundColor: MARKER_COLORS.issueDate }}></span>
-                                            <label className="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" checked={config.issueDate.enabled} onChange={(e) => handleConfigChange('issueDate', 'enabled', e.target.checked)} className="rounded border-[var(--color-neon-border)] text-[var(--color-neon-primary)] focus:ring-[var(--color-neon-primary)] bg-[var(--color-neon-bg)]" />
-                                                <span className="font-semibold" style={{ color: MARKER_COLORS.issueDate }}>Issue Date</span>
-                                            </label>
+                                        <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => handleConfigChange('issueDate', 'enabled', !config.issueDate.enabled)}>
+                                            <span className="w-3 h-3 rounded-full flex-shrink-0 transition-colors" style={{ backgroundColor: config.issueDate.enabled ? MARKER_COLORS.issueDate : 'var(--color-neon-surface-hover)', boxShadow: config.issueDate.enabled ? `0 0 8px ${MARKER_COLORS.issueDate}99` : 'none' }}></span>
+                                            <div className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors border ${config.issueDate.enabled ? 'border-transparent' : 'border-[var(--color-neon-border)]'}`} style={{ backgroundColor: config.issueDate.enabled ? MARKER_COLORS.issueDate : 'transparent' }}>
+                                                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${config.issueDate.enabled ? 'translate-x-4' : 'translate-x-1'}`} />
+                                            </div>
+                                            <span className="font-semibold transition-colors" style={{ color: config.issueDate.enabled ? MARKER_COLORS.issueDate : 'var(--color-neon-muted)' }}>Issue Date</span>
                                         </div>
                                         {config.issueDate.enabled && (
                                             <button onClick={() => setActiveTarget(activeTarget === 'issueDate' ? null : 'issueDate')} className={`text-xs px-3 py-1.5 rounded-lg flex items-center transition-colors ${activeTarget === 'issueDate' ? 'bg-[var(--color-neon-primary)] text-black font-bold' : 'bg-[var(--color-neon-surface-hover)] border border-[var(--color-neon-border)] hover:border-[var(--color-neon-primary)]'}`}>
@@ -413,11 +422,10 @@ export default function Dashboard() {
                                         )}
                                     </div>
                                     {config.issueDate.enabled && (
-                                        <div className="grid grid-cols-4 gap-4">
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">X Position (%)</label><input type="number" step="0.1" value={config.issueDate.x} onChange={e => handleConfigChange('issueDate', 'x', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Y Position (%)</label><input type="number" step="0.1" value={config.issueDate.y} onChange={e => handleConfigChange('issueDate', 'y', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Font Size</label><input type="number" value={config.issueDate.size} onChange={e => handleConfigChange('issueDate', 'size', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Color (Hex)</label><input type="text" value={config.issueDate.hex} onChange={e => handleConfigChange('issueDate', 'hex', e.target.value)} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1 font-mono uppercase" /></div>
+                                        <div className="grid grid-cols-3 gap-4 bg-black/20 p-4 rounded-xl border border-[var(--color-neon-border)]/50 mt-2">
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Font Size</label><input type="number" value={config.issueDate.size} onChange={e => handleConfigChange('issueDate', 'size', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm focus:border-[var(--color-neon-primary)] outline-none transition-colors" /></div>
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Style</label><select value={config.issueDate.fontStyle} onChange={e => handleConfigChange('issueDate', 'fontStyle', e.target.value)} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] text-[var(--color-neon-text)] rounded-lg p-2 text-sm focus:border-[var(--color-neon-primary)] outline-none transition-colors"><option value="normal">Normal</option><option value="bold">Bold</option><option value="italic">Italic</option></select></div>
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Color</label><div className="flex items-center gap-2 bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-1.5"><input type="color" value={config.issueDate.hex} onChange={e => handleConfigChange('issueDate', 'hex', e.target.value)} className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent flex-shrink-0" /><span className="text-xs font-mono uppercase text-[var(--color-neon-muted)] truncate">{config.issueDate.hex}</span></div></div>
                                         </div>
                                     )}
                                 </div>
@@ -425,12 +433,12 @@ export default function Dashboard() {
                                 {/* QR Code settings */}
                                 <div className="pt-4">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center space-x-3">
-                                            <span className="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]" style={{ backgroundColor: MARKER_COLORS.qrCode }}></span>
-                                            <label className={`flex items-center space-x-2 ${!saveToDb ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-                                                <input type="checkbox" disabled={!saveToDb} checked={config.qrCode.enabled} onChange={(e) => handleConfigChange('qrCode', 'enabled', e.target.checked)} className="rounded border-[var(--color-neon-border)] text-[var(--color-neon-primary)] focus:ring-[var(--color-neon-primary)] bg-[var(--color-neon-bg)]" />
-                                                <span className="font-semibold" style={{ color: MARKER_COLORS.qrCode }}>QR Code Verification Badge</span>
-                                            </label>
+                                        <div className={`flex items-center space-x-3 transition-opacity ${!saveToDb ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer group'}`} onClick={() => saveToDb && handleConfigChange('qrCode', 'enabled', !config.qrCode.enabled)}>
+                                            <span className="w-3 h-3 rounded-full flex-shrink-0 transition-colors" style={{ backgroundColor: config.qrCode.enabled ? MARKER_COLORS.qrCode : 'var(--color-neon-surface-hover)', boxShadow: config.qrCode.enabled ? `0 0 8px ${MARKER_COLORS.qrCode}99` : 'none' }}></span>
+                                            <div className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors border ${config.qrCode.enabled ? 'border-transparent' : 'border-[var(--color-neon-border)]'}`} style={{ backgroundColor: config.qrCode.enabled ? MARKER_COLORS.qrCode : 'transparent' }}>
+                                                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${config.qrCode.enabled ? 'translate-x-4' : 'translate-x-1'}`} />
+                                            </div>
+                                            <span className="font-semibold transition-colors" style={{ color: config.qrCode.enabled ? MARKER_COLORS.qrCode : 'var(--color-neon-muted)' }}>QR Code Badge</span>
                                         </div>
                                         {config.qrCode.enabled && (
                                             <button onClick={() => setActiveTarget(activeTarget === 'qrCode' ? null : 'qrCode')} className={`text-xs px-3 py-1.5 rounded-lg flex items-center transition-colors ${activeTarget === 'qrCode' ? 'bg-[var(--color-neon-primary)] text-black font-bold' : 'bg-[var(--color-neon-surface-hover)] border border-[var(--color-neon-border)] hover:border-[var(--color-neon-primary)]'}`}>
@@ -439,10 +447,8 @@ export default function Dashboard() {
                                         )}
                                     </div>
                                     {config.qrCode.enabled && (
-                                        <div className="grid grid-cols-4 gap-4">
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">X Position (%)</label><input type="number" step="0.1" value={config.qrCode.x} onChange={e => handleConfigChange('qrCode', 'x', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Y Position (%)</label><input type="number" step="0.1" value={config.qrCode.y} onChange={e => handleConfigChange('qrCode', 'y', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
-                                            <div><label className="text-xs text-[var(--color-neon-muted)]">Scale Multiplier</label><input type="number" step="0.1" value={config.qrCode.scale} onChange={e => handleConfigChange('qrCode', 'scale', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
+                                        <div className="grid grid-cols-1 gap-4 bg-black/20 p-4 rounded-xl border border-[var(--color-neon-border)]/50 mt-2">
+                                            <div><label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">Scale Multiplier</label><input type="number" step="0.1" value={config.qrCode.scale} onChange={e => handleConfigChange('qrCode', 'scale', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm focus:border-[var(--color-neon-primary)] outline-none transition-colors" /></div>
                                         </div>
                                     )}
                                 </div>
@@ -450,23 +456,23 @@ export default function Dashboard() {
                                 {/* Save to Database Toggle */}
                                 <div className="pt-4 border-t border-[var(--color-neon-border)]/30 mt-2">
                                     <div className="flex items-center justify-between">
-                                        <label className="flex items-center space-x-2 cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={saveToDb} 
-                                                onChange={(e) => {
-                                                    setSaveToDb(e.target.checked);
-                                                    if (!e.target.checked) {
-                                                        setConfig(prev => ({ ...prev, qrCode: { ...prev.qrCode, enabled: false } }));
-                                                    }
-                                                }} 
-                                                className="rounded border-[var(--color-neon-border)] text-[var(--color-neon-primary)] focus:ring-[var(--color-neon-primary)] bg-[var(--color-neon-bg)]" 
-                                            />
+                                        <div className={`flex items-center space-x-3 transition-opacity ${status === 'unauthenticated' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer group'}`} onClick={() => {
+                                            if (status === 'unauthenticated') return;
+                                            setSaveToDb(!saveToDb);
+                                            if (saveToDb) { // going from true to false
+                                                setConfig(prev => ({ ...prev, qrCode: { ...prev.qrCode, enabled: false } }));
+                                            }
+                                        }}>
+                                            <div className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors border ${saveToDb ? 'border-transparent bg-green-500' : 'border-[var(--color-neon-border)] bg-transparent'}`}>
+                                                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${saveToDb ? 'translate-x-4' : 'translate-x-1'}`} />
+                                            </div>
                                             <span className="font-semibold text-white">Save to Gallery (Database)</span>
-                                        </label>
+                                        </div>
                                     </div>
                                     {!saveToDb && (
-                                        <p className="text-xs text-yellow-400 mt-2">Database saving disabled. Documents won't appear in gallery. QR Verification is turned off.</p>
+                                        <p className="text-xs text-yellow-400 mt-2">
+                                            {status === 'unauthenticated' ? 'Log in to enable saving securely to the gallery and QR verification.' : 'Database saving disabled. Documents won\'t appear in gallery. QR Verification is turned off.'}
+                                        </p>
                                     )}
                                 </div>
                             </div>

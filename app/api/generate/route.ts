@@ -23,9 +23,6 @@ export async function POST(req: NextRequest) {
             console.warn("Session invalid or decryption failed", e);
         }
 
-        if (!session || !session.user) {
-            return NextResponse.json({ error: "Unauthorized. Please log in to generate certificates." }, { status: 401 });
-        }
         const formData = await req.formData();
 
         const templateFile = formData.get("template") as File | null;
@@ -39,6 +36,10 @@ export async function POST(req: NextRequest) {
         const settingsString = formData.get("settings") as string | null;
         const settings = settingsString ? JSON.parse(settingsString) : null;
         const saveToDb = formData.get("saveToDb") !== "false";
+
+        if (saveToDb && (!session || !session.user)) {
+            return NextResponse.json({ error: "Unauthorized. Please log in to save certificates to the database." }, { status: 401 });
+        }
 
         // Determine which columns we actually need
         const needsName = settings?.name?.enabled !== false; // Default true if null
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
                 issueDate: certData.issueDate,
                 templateUrl: templateS3Url, // Reference to original
                 pdfUrl: pdfUrl,
-                userId: session.user.id,
+                userId: session?.user?.id || 'anonymous',
             });
         }
 
