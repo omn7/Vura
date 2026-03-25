@@ -78,9 +78,12 @@ export async function POST(req: NextRequest) {
         const host = req.headers.get("host"); // e.g. "vuraweb.vercel.app"
         const dynamicBaseUrl = host ? `${protocol}://${host}` : undefined;
 
-        // Prepare S3 URL for the original template (just so it's stored once)
-        const templateFileName = `templates/template_${Date.now()}.pdf`;
-        const templateS3Url = await uploadToS3(Buffer.from(templateBuffer), templateFileName);
+        // Prepare S3 URL for the original template (only if saving to DB)
+        let templateS3Url = "";
+        if (saveToDb) {
+            const templateFileName = `templates/template_${Date.now()}.pdf`;
+            templateS3Url = await uploadToS3(Buffer.from(templateBuffer), templateFileName);
+        }
 
         const generatedRecords = [];
 
@@ -104,9 +107,15 @@ export async function POST(req: NextRequest) {
             // Generate the PDF and pass settings down if they exist
             const pdfBuffer = await generateCertificate(templateBuffer, certData, settings, dynamicBaseUrl);
 
-            // Upload generated PDF to S3
-            const pdfFileName = `certificates/${certificateId}.pdf`;
-            const pdfS3Url = await uploadToS3(pdfBuffer, pdfFileName);
+            // Upload generated PDF to S3 or return Data URI directly
+            let pdfUrl = "";
+            if (saveToDb) {
+                const pdfFileName = `certificates/${certificateId}.pdf`;
+                pdfUrl = await uploadToS3(pdfBuffer, pdfFileName);
+            } else {
+                // If not saving, just return base64 so they can download it without hitting any storage!
+                pdfUrl = `data:application/pdf;base64,${pdfBuffer.toString("base64")}`;
+            }
 
             // We collect data for bulk insert
             generatedRecords.push({
@@ -115,7 +124,7 @@ export async function POST(req: NextRequest) {
                 course: certData.course,
                 issueDate: certData.issueDate,
                 templateUrl: templateS3Url, // Reference to original
-                pdfUrl: pdfS3Url,
+                pdfUrl: pdfUrl,
                 userId: session.user.id,
             });
         }
@@ -137,8 +146,8 @@ export async function POST(req: NextRequest) {
             success: true,
             certificates: generatedRecords
         }, { status: 200 });
-    } catch (error: unknown) {
+    } catch (error: any) {
         console.error("Certificate Generation Error:", error);
-        return NextResponse.json({ error: "Failed to generate certificates. Check server logs." }, { status: 500 });
+        return NextResponse.json({ error: "Generation failed: " + (error?.message || String(error)) }, { status: 500 });
     }
 }
