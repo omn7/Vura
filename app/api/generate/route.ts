@@ -35,6 +35,22 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing template or dataset file." }, { status: 400 });
         }
 
+        // Extract settings payload before parsing to know which columns are required
+        const settingsString = formData.get("settings") as string | null;
+        const settings = settingsString ? JSON.parse(settingsString) : null;
+        const saveToDb = formData.get("saveToDb") !== "false";
+
+        // Determine which columns we actually need
+        const needsName = settings?.name?.enabled !== false; // Default true if null
+        const needsCourse = settings?.course?.enabled !== false;
+        const needsIssueDate = settings?.issueDate?.enabled !== false;
+
+        const requiredCols: string[] = [];
+        const requiredColsDisplay: string[] = [];
+        if (needsName) { requiredCols.push('name'); requiredColsDisplay.push('Name'); }
+        if (needsCourse) { requiredCols.push('course'); requiredColsDisplay.push('Course'); }
+        if (needsIssueDate) { requiredCols.push('issuedate'); requiredColsDisplay.push('Issue Date'); }
+
         // 1. Read files into buffers
         const templateBuffer = await templateFile.arrayBuffer();
         const datasetBuffer = await datasetFile.arrayBuffer();
@@ -54,7 +70,9 @@ export async function POST(req: NextRequest) {
                 const potentialFirstRow = sheetRows[0];
                 const normalizedKeys = Object.keys(potentialFirstRow).map(normalizeKey);
 
-                if (normalizedKeys.includes('name') && normalizedKeys.includes('course') && normalizedKeys.includes('issuedate')) {
+                const hasAllRequiredCols = requiredCols.every(col => normalizedKeys.includes(col));
+
+                if (hasAllRequiredCols) {
                     rows = sheetRows;
                     firstRow = potentialFirstRow;
                     break;
@@ -63,15 +81,10 @@ export async function POST(req: NextRequest) {
         }
 
         if (rows.length === 0) {
-            return NextResponse.json({ error: "No sheet containing 'name', 'course', and 'issueDate' columns was found." }, { status: 400 });
+            return NextResponse.json({ error: `No sheet containing the required columns (${requiredColsDisplay.join(', ')}) was found.` }, { status: 400 });
         }
 
         // 4. Process each row
-
-        // Extract settings payload
-        const settingsString = formData.get("settings") as string | null;
-        const settings = settingsString ? JSON.parse(settingsString) : null;
-        const saveToDb = formData.get("saveToDb") !== "false";
 
         // Determine base URL dynamically so the QR code works in production
         const protocol = req.headers.get("x-forwarded-proto") || "http";
@@ -99,8 +112,8 @@ export async function POST(req: NextRequest) {
 
             const certData = {
                 name: String(normalizedRow.name || "Unknown"),
-                course: String(normalizedRow.course || "Unknown"),
-                issueDate: String(normalizedRow.issuedate || "Unknown"),
+                course: String(normalizedRow.course || (!needsCourse ? "" : "Unknown")),
+                issueDate: String(normalizedRow.issuedate || (!needsIssueDate ? "" : "Unknown")),
                 certificateId,
             };
 
