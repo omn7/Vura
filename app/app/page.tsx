@@ -25,6 +25,7 @@ export default function Dashboard() {
     const [statusText, setStatusText] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [successCount, setSuccessCount] = useState<number | null>(null);
+    const [saveToDb, setSaveToDb] = useState(true);
 
     type Certificate = {
         certificateId: string;
@@ -111,6 +112,7 @@ export default function Dashboard() {
         formData.append("template", pdfFile);
         formData.append("dataset", excelFile);
         formData.append("settings", JSON.stringify(config));
+        formData.append("saveToDb", String(saveToDb));
 
         try {
             const response = await fetch("/api/generate", {
@@ -380,8 +382,8 @@ export default function Dashboard() {
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center space-x-3">
                                             <span className="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]" style={{ backgroundColor: MARKER_COLORS.qrCode }}></span>
-                                            <label className="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" checked={config.qrCode.enabled} onChange={(e) => handleConfigChange('qrCode', 'enabled', e.target.checked)} className="rounded border-[var(--color-neon-border)] text-[var(--color-neon-primary)] focus:ring-[var(--color-neon-primary)] bg-[var(--color-neon-bg)]" />
+                                            <label className={`flex items-center space-x-2 ${!saveToDb ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                                                <input type="checkbox" disabled={!saveToDb} checked={config.qrCode.enabled} onChange={(e) => handleConfigChange('qrCode', 'enabled', e.target.checked)} className="rounded border-[var(--color-neon-border)] text-[var(--color-neon-primary)] focus:ring-[var(--color-neon-primary)] bg-[var(--color-neon-bg)]" />
                                                 <span className="font-semibold" style={{ color: MARKER_COLORS.qrCode }}>QR Code Verification Badge</span>
                                             </label>
                                         </div>
@@ -397,6 +399,29 @@ export default function Dashboard() {
                                             <div><label className="text-xs text-[var(--color-neon-muted)]">Y Position (%)</label><input type="number" step="0.1" value={config.qrCode.y} onChange={e => handleConfigChange('qrCode', 'y', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
                                             <div><label className="text-xs text-[var(--color-neon-muted)]">Scale Multiplier</label><input type="number" step="0.1" value={config.qrCode.scale} onChange={e => handleConfigChange('qrCode', 'scale', Number(e.target.value))} className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2 text-sm mt-1" /></div>
                                         </div>
+                                    )}
+                                </div>
+                                
+                                {/* Save to Database Toggle */}
+                                <div className="pt-4 border-t border-[var(--color-neon-border)]/30 mt-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="flex items-center space-x-2 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={saveToDb} 
+                                                onChange={(e) => {
+                                                    setSaveToDb(e.target.checked);
+                                                    if (!e.target.checked) {
+                                                        setConfig(prev => ({ ...prev, qrCode: { ...prev.qrCode, enabled: false } }));
+                                                    }
+                                                }} 
+                                                className="rounded border-[var(--color-neon-border)] text-[var(--color-neon-primary)] focus:ring-[var(--color-neon-primary)] bg-[var(--color-neon-bg)]" 
+                                            />
+                                            <span className="font-semibold text-white">Save to Gallery (Database)</span>
+                                        </label>
+                                    </div>
+                                    {!saveToDb && (
+                                        <p className="text-xs text-yellow-400 mt-2">Database saving disabled. Documents won't appear in gallery. QR Verification is turned off.</p>
                                     )}
                                 </div>
                             </div>

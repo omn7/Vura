@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
         // Extract settings payload
         const settingsString = formData.get("settings") as string | null;
         const settings = settingsString ? JSON.parse(settingsString) : null;
+        const saveToDb = formData.get("saveToDb") !== "false";
 
         // Determine base URL dynamically so the QR code works in production
         const protocol = req.headers.get("x-forwarded-proto") || "http";
@@ -119,16 +120,20 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // 4. Save metadata to Neon Postgres via Prisma
-        const dbResult = await prisma.certificate.createMany({
-            data: generatedRecords,
-            skipDuplicates: true,
-        });
+        // 4. Save metadata to Neon Postgres via Prisma (conditionally)
+        let count = generatedRecords.length;
+        if (saveToDb) {
+            const dbResult = await prisma.certificate.createMany({
+                data: generatedRecords,
+                skipDuplicates: true,
+            });
+            count = dbResult.count;
+        }
 
         // Fetch back the created objects to return them exactly as recorded (optional based on architecture, but returning the in-memory built array also works perfectly)
 
         return NextResponse.json({
-            count: dbResult.count,
+            count: count,
             success: true,
             certificates: generatedRecords
         }, { status: 200 });
