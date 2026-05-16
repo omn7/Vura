@@ -48,5 +48,5 @@ Make sure you have Node.js installed on your machine before beginning the enviro
 ### 1. Fork & Clone
 Fork the repository to your personal profile, then clone your fork locally:
 ```bash
-git clone [https://github.com/YOUR_USERNAME/vura.git](https://github.com/YOUR_USERNAME/vura.git)
+git clone [https://github.com/omn7/vura.git](https://github.com/omn7/vura.git)
 cd vura
