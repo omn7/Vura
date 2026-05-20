@@ -27,33 +27,26 @@ export const authOptions: NextAuthOptions = {
             name: "Credentials",
 
             credentials: {
-                email: {
-                    label: "Email",
-                    type: "email",
-                },
-
-                password: {
-                    label: "Password",
-                    type: "password",
-                },
+                email: { label: "Email", type: "email" },
+                password: { label: "Password", type: "password" },
             },
 
-            async authorize(credentials, req) {
-                const email =
-                    typeof credentials?.email === "string"
-                        ? credentials.email
-                        : "anonymous";
-                const rateLimitKey = getRateLimitKey(
-                    "login",
-                    email,
-                    req?.headers
-                );
-
-                const blockStatus = isBlocked(rateLimitKey);
-                if (blockStatus.blocked) {
-                    throw new Error(AUTH_RATE_LIMIT_MESSAGE);
+            authorize: async (credentials, req) => {
+                if (!credentials || !credentials.email || !credentials.password) {
+                    return null;
                 }
 
+                const forwardedFor = req?.headers?.["x-forwarded-for"];
+                const ip = Array.isArray(forwardedFor)
+                    ? forwardedFor[0]
+                    : forwardedFor?.split(",")[0] || "unknown";
+
+                const rateLimitKey = `${ip}:${credentials.email}`;
+
+                const blockStatus = isBlocked(rateLimitKey);
+                if (blockStatus.blocked) return null;
+
+                // Validate input shape
                 const parsed = loginSchema.safeParse(credentials);
 
                 if (!parsed.success) {
@@ -63,23 +56,13 @@ export const authOptions: NextAuthOptions = {
                     );
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: {
-                        email: parsed.data.email.toLowerCase(),
-                    },
-                });
-
+                const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
                 if (!user || !user.password) {
                     recordFailedAttempt(rateLimitKey);
                     return null;
                 }
 
-                const isPasswordValid =
-                    await bcrypt.compare(
-                        parsed.data.password,
-                        user.password
-                    );
-
+                const isPasswordValid = await bcrypt.compare(parsed.data.password, user.password);
                 if (!isPasswordValid) {
                     recordFailedAttempt(rateLimitKey);
                     return null;
