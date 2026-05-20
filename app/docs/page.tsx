@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
     ShieldCheck, Copy, Check, Terminal, Globe,
     AlertTriangle, CheckCircle2, XCircle, ArrowRight,
-    Code2, Zap, Key, Plus, Search, ExternalLink
+    Code2, Zap, Key, Plus, Search, ExternalLink, Menu, X
 } from "lucide-react"
 import { motion, type Variants, AnimatePresence } from "framer-motion"
 
@@ -234,6 +234,7 @@ type Lang = "curl" | "js" | "python"
 export default function DocsPage() {
     const [mode, setMode] = useState<Mode>("verify")
     const [lang, setLang] = useState<Lang>("curl")
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     const fadeUp: Variants = {
         hidden: { opacity: 0, y: 20 },
@@ -248,16 +249,88 @@ export default function DocsPage() {
             {/* ── Navbar ── */}
             <header className="sticky top-0 z-50 border-b border-[var(--color-neon-border)] bg-[rgba(3,3,3,0.85)] backdrop-blur-xl">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
+                    {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <Image src="/vuralogo.png" alt="Vura Logo" width={32} height={32} className="rounded-lg object-contain shadow-[0_0_12px_rgba(0,229,153,0.4)] group-hover:shadow-[0_0_20px_rgba(0,229,153,0.6)] transition-all" />
-                        <span className="text-xl font-black tracking-widest uppercase text-white">VURA</span>
+                        <Image
+                            src="/vuralogo.png"
+                            alt="Vura Logo"
+                            width={32}
+                            height={32}
+                            className="rounded-lg object-contain shadow-[0_0_12px_rgba(0,229,153,0.4)] group-hover:shadow-[0_0_20px_rgba(0,229,153,0.6)] transition-all"
+                        />
+                        <span className="text-xl font-black tracking-widest uppercase text-white">
+                            VURA
+                        </span>
                     </Link>
-                    <nav className="flex items-center gap-6 text-sm text-[var(--color-neon-muted)]">
-                        <Link href="/" className="hover:text-white transition-colors">Home</Link>
-                        <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
-                        <span className="text-[var(--color-neon-primary)] font-semibold">API Docs</span>
+
+                    {/* Desktop Nav */}
+                    <nav className="hidden md:flex items-center gap-6 text-sm text-[var(--color-neon-muted)]">
+                        <Link href="/" className="hover:text-white transition-colors">
+                            Home
+                        </Link>
+
+                        <Link href="/dashboard" className="hover:text-white transition-colors">
+                            Dashboard
+                        </Link>
+
+                        <span className="text-[var(--color-neon-primary)] font-semibold">
+                            API Docs
+                        </span>
                     </nav>
+
+                    {/* Mobile Hamburger */}
+                    <button
+                        className="md:hidden text-white p-2"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    >
+                        {isMobileMenuOpen ? (
+                            <X className="w-5 h-5" />
+                        ) : (
+                            <Menu className="w-5 h-5" />
+                        )}
+                    </button>
                 </div>
+
+                {/* Mobile Menu */}
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0, y: -10 }}
+                            animate={{ opacity: 1, height: "auto", y: 0 }}
+                            exit={{ opacity: 0, height: 0, y: -10 }}
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            className="absolute top-16 left-0 w-full md:hidden bg-[rgba(3,3,3,0.97)] backdrop-blur-xl border-b border-[var(--color-neon-border)] overflow-hidden z-50"
+                        >
+                            <nav className="flex flex-col px-6 py-4 gap-4 text-sm text-[var(--color-neon-muted)]">
+
+                                <Link
+                                    href="/"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="hover:text-white py-1 transition-colors"
+                                >
+                                    Home
+                                </Link>
+
+                                <Link
+                                    href="/dashboard"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="hover:text-white py-1 transition-colors"
+                                >
+                                    Dashboard
+                                </Link>
+
+                                <Link
+                                    href="/docs"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="text-[var(--color-neon-primary)] py-1 font-semibold"
+                                >
+                                    API Docs
+                                </Link>
+                            </nav>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </header>
 
             <main className="max-w-7xl mx-auto px-6 py-16 space-y-24">
@@ -611,6 +684,6 @@ export default function DocsPage() {
             <footer className="border-t border-[var(--color-neon-border)] py-8 px-6 text-center text-xs text-[var(--color-neon-muted)]">
                 © {new Date().getFullYear()} <a href="https://omnarkhede.tech" className="text-white hover:text-[var(--color-neon-primary)] transition-colors">Om Narkhede</a>. All rights reserved.
             </footer>
-        </div>
+        </div >
     )
 }
