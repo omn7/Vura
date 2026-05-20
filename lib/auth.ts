@@ -7,9 +7,11 @@ import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validations";
 
 import {
+    clearFailedAttempts,
+    getRateLimitKey,
     isBlocked,
     recordFailedAttempt,
-    clearFailedAttempts,
+    AUTH_RATE_LIMIT_MESSAGE,
 } from "@/lib/rate-limit";
 
 export const authOptions: NextAuthOptions = {
@@ -30,43 +32,41 @@ export const authOptions: NextAuthOptions = {
             name: "Credentials",
 
             credentials: {
-                email: {
-                    label: "Email",
-                    type: "email",
-                },
-
-                password: {
-                    label: "Password",
-                    type: "password",
-                },
+                email: { label: "Email", type: "email" },
+                password: { label: "Password", type: "password" },
             },
 
-            async authorize(credentials, req) {
-                if (!credentials?.email || !credentials?.password) {
+            authorize: async (credentials, req) => {
+                if (!credentials || !credentials.email || !credentials.password) {
                     return null;
-                }
-
-                const parsed = loginSchema.safeParse(credentials);
-                if (!parsed.success) {
-                    throw new Error(parsed.error.issues[0].message);
                 }
 
                 const forwardedFor = req?.headers?.["x-forwarded-for"];
                 const ip = Array.isArray(forwardedFor)
                     ? forwardedFor[0]
                     : forwardedFor?.split(",")[0] || "unknown";
+
                 const rateLimitKey = `${ip}:${credentials.email}`;
 
                 const blockStatus = isBlocked(rateLimitKey);
                 if (blockStatus.blocked) {
                     throw new Error("Too many failed login attempts. Please try again later.");
                 }
+                if (blockStatus.blocked) return null;
 
-                const user = await prisma.user.findUnique({
-                    where: { email: parsed.data.email },
-                });
+                // Validate input shape
+                const parsed = loginSchema.safeParse(credentials);
 
                 if (!user) {
+                if (!parsed.success) {
+                    recordFailedAttempt(rateLimitKey);
+                    throw new Error(
+                        parsed.error.issues[0].message
+                    );
+                }
+
+                const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+                if (!user || !user.password) {
                     recordFailedAttempt(rateLimitKey);
                     throw new Error("User not found");
                 }
@@ -77,7 +77,6 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 const isPasswordValid = await bcrypt.compare(parsed.data.password, user.password);
-
                 if (!isPasswordValid) {
                     recordFailedAttempt(rateLimitKey);
                     throw new Error("Invalid password");
