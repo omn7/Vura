@@ -4,13 +4,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
     LayoutDashboard, Key, ShieldCheck, User, Settings,
-    LogOut, ChevronRight, X, Activity
+    LogOut, ChevronRight, X, Activity, Mail
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useState } from "react"
 
 const NAV = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Certificates" },
+    { href: "/dashboard/deliveries", icon: Mail, label: "Deliveries" },
     { href: "/dashboard/api-key", icon: Key, label: "API Key" },
     { href: "/dashboard/usage", icon: Activity, label: "Usage" },
     { href: "/dashboard/verify", icon: ShieldCheck, label: "Verify" },

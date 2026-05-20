@@ -49,21 +49,15 @@ export async function POST(req: NextRequest) {
 
         // Extract settings payload before parsing to know which columns are required
         const settingsString = formData.get("settings") as string | null;
-        let settings = null;
-        if (settingsString) {
-            try {
-                settings = JSON.parse(settingsString);
-            } catch (error) {
-                return NextResponse.json(
-                    { error: "Invalid settings JSON. Please provide valid JSON in the settings field." },
-                    { status: 400 }
-                );
-        let settings: unknown = null;
+        let settings: Record<string, any> | null = null;
         if (settingsString) {
             try {
                 settings = JSON.parse(settingsString);
             } catch {
-                return NextResponse.json({ error: "Invalid settings JSON" }, { status: 400 });
+                return NextResponse.json(
+                    { error: "Invalid settings JSON. Please provide valid JSON in the settings field." },
+                    { status: 400 }
+                );
             }
         }
         const saveToDb = formData.get("saveToDb") !== "false";

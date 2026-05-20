@@ -7,9 +7,11 @@ import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validations";
 
 import {
+    clearFailedAttempts,
+    getRateLimitKey,
     isBlocked,
     recordFailedAttempt,
-    clearFailedAttempts,
+    AUTH_RATE_LIMIT_MESSAGE,
 } from "@/lib/rate-limit";
 
 export const authOptions: NextAuthOptions = {
@@ -46,8 +48,12 @@ export const authOptions: NextAuthOptions = {
 
                 // Validate input shape
                 const parsed = loginSchema.safeParse(credentials);
+
                 if (!parsed.success) {
-                    throw new Error(parsed.error.errors[0].message);
+                    recordFailedAttempt(rateLimitKey);
+                    throw new Error(
+                        parsed.error.issues[0].message
+                    );
                 }
 
                 const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
