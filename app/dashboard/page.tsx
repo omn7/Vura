@@ -10,12 +10,12 @@ import CopyLinkButton from "@/components/CopyLinkButton";
 export default async function DashboardPage() {
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user) {
+    if (!session || !session.user || !(session.user as any).id) {
         redirect("/login");
     }
 
     const certificates = await prisma.certificate.findMany({
-        where: { userId: session!.user.id },
+        where: { userId: (session.user as any).id },
         orderBy: { createdAt: "desc" },
     });
 
@@ -145,7 +145,14 @@ export default async function DashboardPage() {
                     {/* Full grid below */}
                     <div className="pt-2">
                         <h2 className="text-sm font-semibold text-white mb-4">All Certificates</h2>
-                        <CertificatesGrid initialCerts={certificates} />
+                        <CertificatesGrid initialCerts={certificates.map(c => ({
+                            certificateId: c.certificateId,
+                            name: c.name,
+                            course: c.course,
+                            issueDate: c.issueDate,
+                            pdfUrl: c.pdfUrl,
+                            revoked: c.revoked
+                        }))} />
                     </div>
                 </>
             )}
