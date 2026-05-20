@@ -4,11 +4,64 @@ type AttemptRecord = {
     blockedUntil?: number;
 };
 
+type HeaderBag =
+    | Headers
+    | Record<string, string | string[] | undefined>
+    | undefined;
+
 const loginAttempts = new Map<string, AttemptRecord>();
 
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 10 * 60 * 1000;
 const BLOCK_DURATION_MS = 15 * 60 * 1000;
+export const AUTH_RATE_LIMIT_MESSAGE =
+    "Too many authentication attempts. Please try again later.";
+
+function readHeader(headers: HeaderBag, name: string) {
+    if (!headers) {
+        return undefined;
+    }
+
+    if (typeof (headers as Headers).get === "function") {
+        return (headers as Headers).get(name) ?? undefined;
+    }
+
+    const headerRecord = headers as Record<
+        string,
+        string | string[] | undefined
+    >;
+
+    const value =
+        headerRecord[name] ?? headerRecord[name.toLowerCase()];
+
+    if (Array.isArray(value)) {
+        return value[0];
+    }
+
+    return value;
+}
+
+export function getClientIp(headers: HeaderBag) {
+    const forwardedFor = readHeader(headers, "x-forwarded-for");
+    const realIp = readHeader(headers, "x-real-ip");
+
+    return (
+        forwardedFor?.split(",")[0]?.trim() ||
+        realIp?.trim() ||
+        "unknown"
+    );
+}
+
+export function getRateLimitKey(
+    scope: string,
+    identifier: string,
+    headers?: HeaderBag
+) {
+    const normalizedIdentifier =
+        identifier.trim().toLowerCase() || "anonymous";
+
+    return `${scope}:${getClientIp(headers)}:${normalizedIdentifier}`;
+}
 
 export function isBlocked(key: string) {
     const record = loginAttempts.get(key);
@@ -78,4 +131,12 @@ export function recordFailedAttempt(key: string) {
 
 export function clearFailedAttempts(key: string) {
     loginAttempts.delete(key);
+}
+
+export function getRetryAfterHeaders(retryAfter?: number) {
+    return retryAfter
+        ? {
+              "Retry-After": String(retryAfter),
+          }
+        : undefined;
 }

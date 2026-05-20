@@ -7,9 +7,11 @@ import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validations";
 
 import {
+    clearFailedAttempts,
+    getRateLimitKey,
     isBlocked,
     recordFailedAttempt,
-    clearFailedAttempts,
+    AUTH_RATE_LIMIT_MESSAGE,
 } from "@/lib/rate-limit";
 
 export const authOptions: NextAuthOptions = {
@@ -37,28 +39,34 @@ export const authOptions: NextAuthOptions = {
             },
 
             async authorize(credentials, req) {
-                if (!credentials?.email || !credentials?.password) {
-                    return null;
-                }
-
-                const parsed = loginSchema.safeParse(credentials);
-                if (!parsed.success) {
-                    throw new Error(parsed.error.issues[0].message);
-                }
-
-                const forwardedFor = req?.headers?.["x-forwarded-for"];
-                const ip = Array.isArray(forwardedFor)
-                    ? forwardedFor[0]
-                    : forwardedFor?.split(",")[0] || "unknown";
-                const rateLimitKey = `${ip}:${credentials.email}`;
+                const email =
+                    typeof credentials?.email === "string"
+                        ? credentials.email
+                        : "anonymous";
+                const rateLimitKey = getRateLimitKey(
+                    "login",
+                    email,
+                    req?.headers
+                );
 
                 const blockStatus = isBlocked(rateLimitKey);
                 if (blockStatus.blocked) {
-                    return null;
+                    throw new Error(AUTH_RATE_LIMIT_MESSAGE);
+                }
+
+                const parsed = loginSchema.safeParse(credentials);
+
+                if (!parsed.success) {
+                    recordFailedAttempt(rateLimitKey);
+                    throw new Error(
+                        parsed.error.issues[0].message
+                    );
                 }
 
                 const user = await prisma.user.findUnique({
-                    where: { email: parsed.data.email },
+                    where: {
+                        email: parsed.data.email.toLowerCase(),
+                    },
                 });
 
                 if (!user || !user.password) {
@@ -66,7 +74,11 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                const isPasswordValid = await bcrypt.compare(parsed.data.password, user.password);
+                const isPasswordValid =
+                    await bcrypt.compare(
+                        parsed.data.password,
+                        user.password
+                    );
 
                 if (!isPasswordValid) {
                     recordFailedAttempt(rateLimitKey);
