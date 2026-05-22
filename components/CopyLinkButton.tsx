@@ -2,17 +2,23 @@
 
 import { useState } from 'react';
 
-export default function CopyLinkButton({ url }: { url: string }) {
+interface CopyLinkButtonProps {
+    url?: string;
+    certificateId?: string;
+}
+
+export default function CopyLinkButton({ url, certificateId }: CopyLinkButtonProps) {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
+        const resolvedUrl = url ?? `${window.location.origin}/verify/${certificateId}`;
         try {
-            await navigator.clipboard.writeText(url);
+            await navigator.clipboard.writeText(resolvedUrl);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-            alert(`✅ Link copied!\n\n${url}`);
+            alert(`✅ Link copied!\n\n${resolvedUrl}`);
         } catch (err) {
-            alert(`⚠️ Please copy manually:\n${url}`);
+            alert(`⚠️ Please copy manually:\n${resolvedUrl}`);
         }
     };
 
