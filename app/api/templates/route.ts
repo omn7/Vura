@@ -35,11 +35,12 @@ export async function POST(req: NextRequest) {
       where: { id: eventId },
     })
 
-    if (!event || event.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Event not found or unauthorized" },
-        { status: 403 }
-      )
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 })
+    }
+
+    if (event.userId !== session.user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
     // Upsert template (create or update if already exists for this event)

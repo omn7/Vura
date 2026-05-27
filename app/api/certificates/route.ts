@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
             },
         });
 
-        return NextResponse.json(certificates);
+        return NextResponse.json(certificates, { status: 200 });
     } catch (error) {
         console.error("Failed to fetch certificates:", error);
         return NextResponse.json({ error: "Failed to fetch certificates" }, { status: 500 });

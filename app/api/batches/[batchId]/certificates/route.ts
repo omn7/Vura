@@ -48,5 +48,5 @@ export async function GET(req: NextRequest, context: { params: Promise<{ batchId
         },
     });
 
-    return NextResponse.json(certificates);
+    return NextResponse.json(certificates, { status: 200 });
 }

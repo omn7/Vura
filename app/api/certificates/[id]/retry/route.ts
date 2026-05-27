@@ -33,8 +33,12 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         },
     });
 
-    if (!certificate || certificate.userId !== session.user.id) {
-        return NextResponse.json({ error: "Not retryable" }, { status: 400 });
+    if (!certificate) {
+        return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
+    }
+
+    if (certificate.userId !== session.user.id) {
+        return NextResponse.json({ error: "You do not own this certificate." }, { status: 403 });
     }
 
     if (certificate.status !== "failed") {
@@ -48,7 +52,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             where: { certificateId: certificate.certificateId },
             data: { status: "failed", failureReason },
         });
-        return NextResponse.json({ error: failureReason }, { status: 422 });
+        return NextResponse.json({ error: failureReason }, { status: 400 });
     }
 
     const templateBuffer = await templateResponse.arrayBuffer();

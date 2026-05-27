@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
             });
             return NextResponse.json(
                 { error: `Failed to fetch templateUrl (HTTP ${templateRes.status}). Make sure the URL is publicly accessible.` },
-                { status: 422, headers: corsHeaders }
+                { status: 400, headers: corsHeaders }
             );
         }
         templateBuffer = await templateRes.arrayBuffer();
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
         });
         return NextResponse.json(
             { error: "Could not reach templateUrl. Ensure it is a valid, publicly accessible PDF URL." },
-            { status: 422, headers: corsHeaders }
+            { status: 400, headers: corsHeaders }
         );
     }
 

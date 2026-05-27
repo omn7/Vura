@@ -26,11 +26,12 @@ export async function GET(
       where: { id: eventId },
     })
 
-    if (!event || event.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Event not found or unauthorized" },
-        { status: 403 }
-      )
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 })
+    }
+
+    if (event.userId !== session.user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
     // Fetch template for this event
@@ -71,18 +72,17 @@ export async function DELETE(
     const { eventId } = await params
 
     // Verify event belongs to current user
-    const event = await prisma.event.findUnique({
+    const deleteEvent = await prisma.event.findUnique({
       where: { id: eventId },
     })
 
-    if (!event || event.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Event not found or unauthorized" },
-        { status: 403 }
-      )
+    if (!deleteEvent) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 })
     }
 
-    // Delete template
+    if (deleteEvent.userId !== session.user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+    }
     await prisma.template.delete({
       where: { eventId },
     })
