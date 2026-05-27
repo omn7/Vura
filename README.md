@@ -109,6 +109,8 @@ DATABASE_URL="postgresql://..."
 # Auth
 NEXTAUTH_SECRET="your-secret"
 NEXTAUTH_URL="http://localhost:3000"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
 # AWS S3
 AWS_ACCESS_KEY_ID="your-access-key"

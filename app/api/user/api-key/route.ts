@@ -22,7 +22,7 @@ export async function GET() {
         select: { apiKey: true },
     });
 
-    return NextResponse.json({ apiKey: user?.apiKey ?? null });
+    return NextResponse.json({ apiKey: user?.apiKey ?? null }, { status: 200 });
 }
 
 // POST — generate (first time) or rotate the API key
@@ -38,5 +38,5 @@ export async function POST() {
         select: { apiKey: true },
     });
 
-    return NextResponse.json({ apiKey: user.apiKey });
+    return NextResponse.json({ apiKey: user.apiKey }, { status: 200 });
 }

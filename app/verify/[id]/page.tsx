@@ -114,39 +114,39 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
                     </div>
 
                    {/* CTA Buttons */}
-<div className="flex flex-col sm:flex-row gap-3">
-    
-    {/* View PDF */}
-    <a
-        href={certificate.pdfUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-bold text-black bg-[var(--color-neon-primary)] rounded-xl transition-all hover:bg-[#00ffaa] shadow-[0_0_20px_rgba(0,229,153,0.3)] hover:shadow-[0_0_30px_rgba(0,229,153,0.5)]"
-    >
-        <ExternalLink className="w-4 h-4" />
-        View Original PDF
-    </a>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        {/* View PDF */}
+                        <a
+                            href={certificate.pdfUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-bold text-black bg-[var(--color-neon-primary)] rounded-xl transition-all hover:bg-[#00ffaa] shadow-[0_0_20px_rgba(0,229,153,0.3)] hover:shadow-[0_0_30px_rgba(0,229,153,0.5)]"
+                        >
+                            <ExternalLink className="w-4 h-4" />
+                            View Original PDF
+                        </a>
 
-    {/* Download PDF */}
-    <a
-        href={certificate.pdfUrl}
-        download
-        className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-bold text-white border border-[var(--color-neon-primary)]/30 rounded-xl hover:bg-[var(--color-neon-primary)]/10 transition-all"
-    >
-        <Download className="w-4 h-4" />
-        Download Certificate
-    </a>
-</div>
-
-                {/* Footer note */}
-                <div className="mt-6 flex flex-col items-center gap-2 text-center">
-                    <div className="flex items-center gap-2 text-xs text-[var(--color-neon-muted)]">
-                        <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-neon-primary)]" />
-                        <span>Verified by <span className="text-white font-semibold">Vura Certificate Authority</span></span>
+                        {/* Download PDF */}
+                        <a
+                            href={certificate.pdfUrl}
+                            download
+                            className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-bold text-white border border-[var(--color-neon-primary)]/30 rounded-xl hover:bg-[var(--color-neon-primary)]/10 transition-all"
+                        >
+                            <Download className="w-4 h-4" />
+                            Download Certificate
+                        </a>
                     </div>
-                    <p className="text-xs text-[var(--color-neon-muted)] opacity-60">This certificate has been verified against the Vura registry.</p>
-                </div>
-            </div>
+
+                    {/* Footer note */}
+                    <div className="mt-6 flex flex-col items-center gap-2 text-center">
+                        <div className="flex items-center gap-2 text-xs text-[var(--color-neon-muted)]">
+                            <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-neon-primary)]" />
+                            <span>Verified by <span className="text-white font-semibold">Vura Certificate Authority</span></span>
+                        </div>
+                        <p className="text-xs text-[var(--color-neon-muted)] opacity-60">This certificate has been verified against the Vura registry.</p>
+                    </div>
+                </div> {/* end glass-card */}
+            </div> {/* end max-w-lg wrapper */}
         </main>
     )
 }

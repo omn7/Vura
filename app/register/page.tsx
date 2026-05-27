@@ -28,14 +28,17 @@ export default function RegisterPage() {
             });
 
             const data = await res.json();
+            const errorMessage = data.error || data.message || "Something went wrong.";
 
             if (!res.ok) {
-                throw new Error(data.message || "Something went wrong.");
+                console.error("Registration failed:", { status: res.status, data });
+                throw new Error(errorMessage);
             }
 
             // Successfully registered, send them to login
             router.push("/login?registered=true");
         } catch (err: any) {
+            console.error("Registration request failed:", err);
             setError(err.message);
         } finally {
             setLoading(false);

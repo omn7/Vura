@@ -25,6 +25,9 @@ type GeneratedCertificate = {
     sentAt: string | null;
 };
 
+type FieldSetting = { enabled?: boolean; x?: number; y?: number; fontSize?: number };
+type Settings = { name?: FieldSetting; course?: FieldSetting; issueDate?: FieldSetting; [key: string]: FieldSetting | undefined };
+
 function getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
 }
@@ -42,6 +45,7 @@ export async function POST(req: NextRequest) {
 
         const templateFile = formData.get("template") as File | null;
         const datasetFile = formData.get("dataset") as File | null;
+        const eventIdString = formData.get("eventId") as string | null;
 
         if (!templateFile || !datasetFile) {
             return NextResponse.json({ error: "Missing template or dataset file." }, { status: 400 });
@@ -51,18 +55,39 @@ export async function POST(req: NextRequest) {
         const settingsString = formData.get("settings") as string | null;
         let settings: Record<string, any> | null = null;
 
+        let settings: Settings | null = null;
         if (settingsString) {
+            let parsed: unknown;
             try {
-                settings = JSON.parse(settingsString);
+                parsed = JSON.parse(settingsString);
             } catch {
                 return NextResponse.json(
                     {
                         error:
                             "Invalid settings JSON. Please provide valid JSON in the settings field.",
                     },
+                    { error: "Invalid settings JSON. Please provide valid JSON in the settings field." },
                     { status: 400 }
                 );
             }
+            if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+                return NextResponse.json(
+                    { error: "Invalid settings: must be a JSON object." },
+                    { status: 400 }
+                );
+            }
+            const s = parsed as Record<string, unknown>;
+            const fieldKeys = ["name", "course", "issueDate", "qrCode"] as const;
+            for (const key of fieldKeys) {
+                if (key in s && (typeof s[key] !== "object" || s[key] === null || Array.isArray(s[key]))) {
+                    return NextResponse.json(
+                        { error: `Invalid settings: "${key}" must be an object.` },
+                        { error: `Invalid settings: \"${key}\" must be an object.` },
+                        { status: 400 }
+                    );
+                }
+            }
+            settings = parsed as Settings;
         }
 
         const canvasWidth = 794;
@@ -101,6 +126,18 @@ export async function POST(req: NextRequest) {
         const datasetName = datasetFile.name.toLowerCase();
 
         let rows: any[] = [];
+        // 3. Find the valid sheet
+        let rows: Record<string, unknown>[] = [];
+
+        for (const sheetName of workbook.SheetNames) {
+            const sheet = workbook.Sheets[sheetName];
+            const sheetRows = xlsx.utils.sheet_to_json<Record<string, unknown>>(sheet);
+            if (sheetRows.length > 0) {
+                const normalizedKeys = Object.keys(sheetRows[0]).map(normalizeKey);
+                if (requiredCols.every(col => normalizedKeys.includes(col))) {
+                    rows = sheetRows;
+                    break;
+        let rows: Record<string, unknown>[] = [];
 
         if (datasetName.endsWith(".csv")) {
             const csvText = Buffer.from(datasetBuffer).toString("utf-8");
@@ -112,6 +149,14 @@ export async function POST(req: NextRequest) {
             const csvRows = xlsx.utils.sheet_to_json<any>(sheet);
             if (csvRows.length === 0) {
                 return NextResponse.json({ error: "The CSV file contains no data rows." }, { status: 400 });
+            const csvRows = xlsx.utils.sheet_to_json<Record<string, unknown>>(sheet);
+            if (csvRows.length > 0) {
+                const normalizedKeys = Object.keys(csvRows[0]).map(normalizeKey);
+                const hasAllRequiredCols = requiredCols.every(col => normalizedKeys.includes(col));
+                if (!hasAllRequiredCols) {
+                    return NextResponse.json({ error: `CSV is missing required columns: ${requiredColsDisplay.join(", ")}.` }, { status: 400 });
+                }
+                rows = csvRows;
             }
             const normalizedKeys = Object.keys(csvRows[0]).map(normalizeKey);
             if (!requiredCols.every(col => normalizedKeys.includes(col))) {
@@ -122,7 +167,7 @@ export async function POST(req: NextRequest) {
             const workbook = xlsx.read(datasetBuffer, { type: "buffer" });
             for (const sheetName of workbook.SheetNames) {
                 const sheet = workbook.Sheets[sheetName];
-                const sheetRows = xlsx.utils.sheet_to_json<any>(sheet);
+                const sheetRows = xlsx.utils.sheet_to_json<Record<string, unknown>>(sheet);
                 if (sheetRows.length > 0) {
                     const normalizedKeys = Object.keys(sheetRows[0]).map(normalizeKey);
                     if (requiredCols.every(col => normalizedKeys.includes(col))) {
@@ -304,8 +349,8 @@ export async function POST(req: NextRequest) {
             batchId,
             certificates: generatedRecords
         }, { status: 200 });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Certificate Generation Error:", error);
-        return NextResponse.json({ error: "Generation failed: " + (error?.message || String(error)) }, { status: 500 });
+        return NextResponse.json({ error: "Generation failed: " + getErrorMessage(error) }, { status: 500 });
     }
 }

@@ -3,18 +3,50 @@ import prisma from "@/lib/prisma";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { forgotPasswordSchema } from "@/lib/validations";
+import {
+    AUTH_RATE_LIMIT_MESSAGE,
+    getRateLimitKey,
+    getRetryAfterHeaders,
+    isBlocked,
+    recordFailedAttempt,
+} from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
+        const rateLimitKey = getRateLimitKey(
+            "forgot-password",
+            typeof body?.email === "string"
+                ? body.email
+                : "anonymous",
+            req.headers
+        );
+        const blockStatus = isBlocked(rateLimitKey);
+
+        if (blockStatus.blocked) {
+            return NextResponse.json(
+                {
+                    message: AUTH_RATE_LIMIT_MESSAGE,
+                },
+                {
+                    status: 429,
+                    headers: getRetryAfterHeaders(
+                        blockStatus.retryAfter
+                    ),
+                }
+            );
+        }
+
         const parsed = forgotPasswordSchema.safeParse(body);
 
         if (!parsed.success) {
-            const error = parsed.error.errors[0].message;
+            recordFailedAttempt(rateLimitKey);
+            const error = parsed.error.issues[0].message;
             return NextResponse.json({ error }, { status: 400 });
         }
 
-        const { email } = parsed.data;
+        const email = parsed.data.email.toLowerCase();
+        recordFailedAttempt(rateLimitKey);
 
         const user = await prisma.user.findUnique({
             where: { email },

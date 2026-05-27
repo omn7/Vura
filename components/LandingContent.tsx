@@ -51,6 +51,7 @@ export default function LandingContent({ session }: { session: any }) {
         offset: ["start 60%", "end 40%"]
     })
     const router = useRouter()
+    const closeMobileMenu = () => setIsMobileMenuOpen(false)
 
     useEffect(() => {
         return howItWorksScrollProgress.on("change", (latest) => {
@@ -82,20 +83,21 @@ export default function LandingContent({ session }: { session: any }) {
             {/* ─── Navbar ─── */}
             <motion.header style={{ backgroundColor: navBg, borderBottomColor: navBorder, borderBottomWidth: 1, borderBottomStyle: 'solid' }}
                 className="fixed top-0 z-50 w-full backdrop-blur-xl">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 group">
+                    <Link href="/" className="flex items-center gap-2 group shrink-0">
                         <img src="/vuralogo.png" alt="Vura Logo" className="w-10 h-10 object-contain transition-transform group-hover:scale-105" />
                         <span className="text-xl font-black tracking-widest uppercase text-white">VURA</span>
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-8 text-sm text-[var(--color-neon-muted)]">
-                        <a href="#features" className="hover:text-white transition-colors">Features</a>
-                        <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
-                        <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+                        <Link href="#features" className="hover:text-white transition-colors">Features</Link>
+                        <Link href="#how-it-works" className="hover:text-white transition-colors">How It Works</Link>
+                        <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
                         <Link href="/docs" className="text-[var(--color-neon-primary)] hover:text-white transition-colors">API Docs</Link>
                     </nav>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <div className="relative">
                             <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="text-[var(--color-neon-muted)] hover:text-white transition-colors p-2 flex items-center justify-center rounded-full hover:bg-white/5">
                                 <Search className="w-4 h-4" />
@@ -156,7 +158,7 @@ export default function LandingContent({ session }: { session: any }) {
                                 <Link href="/register" className="btn-primary py-2 px-5 text-sm flex items-center gap-1.5">Get Started <ArrowRight className="w-3.5 h-3.5" /></Link>
                             </div>
                         )}
-                        <button className="md:hidden text-white p-2" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                        <button className="md:hidden text-white p-2 shrink-0" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
                             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                         </button>
                     </div>
@@ -166,13 +168,20 @@ export default function LandingContent({ session }: { session: any }) {
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
                             className="md:hidden bg-[rgba(3,3,3,0.97)] backdrop-blur-xl border-b border-[var(--color-neon-border)] overflow-hidden">
                             <nav className="flex flex-col px-6 py-4 gap-4 text-sm text-[var(--color-neon-muted)]">
-                                <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white py-1">Features</a>
-                                <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white py-1">How It Works</a>
-                                <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-white py-1">Pricing</a>
+                                <Link href="#features" onClick={closeMobileMenu} className="hover:text-white py-1">Features</Link>
+                                <Link href="#how-it-works" onClick={closeMobileMenu} className="hover:text-white py-1">How It Works</Link>
+                                <Link href="#pricing" onClick={closeMobileMenu} className="hover:text-white py-1">Pricing</Link>
+                                <Link
+                                    href="/docs"
+                                    onClick={closeMobileMenu}
+                                    className="text-[var(--color-neon-primary)] hover:text-white py-1 transition-colors"
+                                >
+                                    API Docs
+                                </Link>
                                 {!session && (
                                     <div className="flex flex-col gap-3 pt-3 border-t border-[var(--color-neon-border)]">
-                                        <Link href="/login" className="text-center py-2 text-white bg-white/5 rounded-xl">Sign In</Link>
-                                        <Link href="/register" className="btn-primary py-2.5 text-center justify-center">Get Started</Link>
+                                        <Link href="/login" onClick={closeMobileMenu} className="text-center py-2 text-white bg-white/5 rounded-xl">Sign In</Link>
+                                        <Link href="/register" onClick={closeMobileMenu} className="btn-primary py-2.5 text-center justify-center">Get Started</Link>
                                     </div>
                                 )}
                             </nav>
@@ -250,7 +259,7 @@ export default function LandingContent({ session }: { session: any }) {
                             <span className="section-label inline-flex">Workflow</span>
                             <h2 className="mt-5 text-4xl md:text-5xl font-medium tracking-tight text-white">From spreadsheet<br />to certificate in 4 steps</h2>
                         </motion.div>
-                        
+
                         <div className="relative mx-auto mt-20 max-w-5xl">
                             {/* Visual Connecting Line (Desktop) */}
                             <div className="hidden md:block absolute top-[17px] left-[12.5%] right-[12.5%] h-[2px] bg-[#222] z-0">
@@ -265,8 +274,8 @@ export default function LandingContent({ session }: { session: any }) {
                                     const isLast = i === STEPS.length - 1
 
                                     return (
-                                        <div 
-                                            key={s.n} 
+                                        <div
+                                            key={s.n}
                                             className="relative flex-1 flex flex-row md:flex-col gap-6 md:gap-0 group items-start md:items-center text-left md:text-center"
                                         >
                                             {/* Visual Connecting Line (Mobile) */}
@@ -283,23 +292,23 @@ export default function LandingContent({ session }: { session: any }) {
                                                     {isActive && (
                                                         <motion.div layoutId="stepper-halo" className="absolute inset-[-8px] rounded-full bg-[var(--color-neon-primary)]/20 shadow-[0_0_20px_rgba(0,229,153,0.3)] pointer-events-none" />
                                                     )}
-                                                    
+
                                                     {/* Inner Circle / Dot */}
                                                     {isCompleted && (
                                                         <div className="w-full h-full rounded-full bg-[var(--color-neon-primary)] flex items-center justify-center shadow-[0_0_12px_rgba(0,229,153,0.5)] z-10 transition-all duration-300">
-                                                           <CheckCircle className="w-4 h-4 text-black" strokeWidth={3} />
+                                                            <CheckCircle className="w-4 h-4 text-black" strokeWidth={3} />
                                                         </div>
                                                     )}
-                                                    
+
                                                     {isActive && (
                                                         <div className="w-full h-full rounded-full bg-[var(--color-neon-primary)] flex items-center justify-center shadow-[0_0_12px_rgba(0,229,153,0.5)] z-10 transition-all duration-300 scale-110">
-                                                           <div className="w-[8px] h-[8px] rounded-full bg-white shadow-sm" />
+                                                            <div className="w-[8px] h-[8px] rounded-full bg-white shadow-sm" />
                                                         </div>
                                                     )}
 
                                                     {isInactive && (
                                                         <div className="w-full h-full rounded-full bg-[#111] border-2 border-[#333] flex items-center justify-center z-10 transition-all duration-300 group-hover:border-[#555]">
-                                                           <div className="w-[6px] h-[6px] rounded-full bg-[#444] group-hover:bg-[#666] transition-colors" />
+                                                            <div className="w-[6px] h-[6px] rounded-full bg-[#444] group-hover:bg-[#666] transition-colors" />
                                                         </div>
                                                     )}
                                                 </div>
@@ -307,7 +316,7 @@ export default function LandingContent({ session }: { session: any }) {
 
                                             {/* Step Content */}
                                             <div className={`flex flex-col items-start md:items-center transition-all duration-300 w-full pt-4 ${isActive ? 'opacity-100' : 'opacity-40 group-hover:opacity-70'}`}>
-                                                
+
                                                 <h3 className="text-lg font-medium tracking-tight text-white mb-3">
                                                     {s.title}
                                                 </h3>
@@ -325,7 +334,7 @@ export default function LandingContent({ session }: { session: any }) {
 
                 {/* ─── Features ─── */}
                 <section id="features" className="py-28 px-6 relative overflow-hidden bg-[rgba(3,3,3,0.8)]">
-                    
+
                     {/* Dark Green Grid Overlay */}
                     <div className="absolute inset-0 z-0 pointer-events-none opacity-20" style={{
                         backgroundImage: `
@@ -354,7 +363,7 @@ export default function LandingContent({ session }: { session: any }) {
                             { top: "32%", left: "88%", delay: "2.5s" },
                         ].map((s, i) => (
                             <div key={i} className="absolute w-[1.5px] h-[1.5px] bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)] opacity-60"
-                                 style={{ top: s.top, left: s.left, animationDelay: s.delay, animationDuration: '3s' }} />
+                                style={{ top: s.top, left: s.left, animationDelay: s.delay, animationDuration: '3s' }} />
                         ))}
                     </div>
 
@@ -380,16 +389,16 @@ export default function LandingContent({ session }: { session: any }) {
                         <div className="hidden md:grid md:grid-cols-3 xl:flex xl:flex-nowrap xl:justify-between gap-5 pb-10 pt-4 w-full">
                             {FEATURES.map((f, i) => (
                                 <motion.div key={f.title} initial={{ opacity: 0, scale: 0.95, y: 20 }} whileInView={{ opacity: 1, scale: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.08 }}
-                                    whileHover={{ y: -8, scale: 1.02 }} 
+                                    whileHover={{ y: -8, scale: 1.02 }}
                                     className="md:w-auto xl:flex-1 rounded-[2rem] flex flex-col items-center justify-center p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 relative overflow-hidden backdrop-blur-xl cursor-pointer group hover:-translate-y-2 hover:shadow-[0_15px_40px_rgba(0,0,0,0.5)]"
                                     style={{ backgroundColor: f.bg, border: `1px solid ${f.color}90` }}>
-                                    
+
                                     <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                                     <div className="relative z-10 transition-transform duration-300 group-hover:scale-110 mb-5 text-[var(--color-neon-primary)]" style={{ color: f.color }}>
                                         <f.icon className="w-12 h-12" strokeWidth={1.5} />
                                     </div>
-                                    
+
                                     <h3 className="text-[17px] md:text-lg font-medium tracking-tight mb-3 relative z-10 leading-tight px-2 transition-colors duration-300" style={{ color: f.color }}>
                                         {f.title}
                                     </h3>
@@ -408,13 +417,13 @@ export default function LandingContent({ session }: { session: any }) {
                                     <div key={`${f.title}-${i}`}
                                         className="shrink-0 w-[240px] rounded-[2rem] flex flex-col items-center justify-center p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-300 relative overflow-hidden backdrop-blur-xl cursor-pointer group hover:-translate-y-2 hover:shadow-[0_15px_40px_rgba(0,0,0,0.5)]"
                                         style={{ backgroundColor: f.bg, border: `1px solid ${f.color}90` }}>
-                                        
+
                                         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                                         <div className="relative z-10 transition-transform duration-300 group-hover:scale-110 mb-5 text-[var(--color-neon-primary)]" style={{ color: f.color }}>
                                             <f.icon className="w-12 h-12" strokeWidth={1.5} />
                                         </div>
-                                        
+
                                         <h3 className="text-[17px] font-medium tracking-tight mb-3 relative z-10 leading-tight px-2 transition-colors duration-300" style={{ color: f.color }}>
                                             {f.title}
                                         </h3>
@@ -432,55 +441,55 @@ export default function LandingContent({ session }: { session: any }) {
                 {/* ─── Testimonials ─── */}
                 <div className="px-4 py-12 md:px-8 w-full max-w-[1400px] mx-auto">
                     <section id="reviews" className="py-24 px-6 border border-[var(--color-neon-border)] bg-[#030604] relative overflow-hidden rounded-[2.5rem] md:rounded-[3.5rem] shadow-[0_0_80px_rgba(3,6,4,0.8)]">
-                    
-                    <div className="max-w-6xl mx-auto relative z-10">
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16 relative">
-                            <span className="section-label inline-flex !bg-[rgba(0,229,153,0.15)] !border-[rgba(0,229,153,0.4)] !text-[#00e599] backdrop-blur-md shadow-[0_0_20px_rgba(0,229,153,0.1)]">Wall of Love</span>
-                            <h2 className="mt-5 text-4xl md:text-5xl font-medium tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">Loved by creators<br />and organizations</h2>
-                        </motion.div>
-                        
-                        <div className="relative flex overflow-hidden w-full max-w-7xl mx-auto py-8 lg:-mx-12 px-6 lg:px-12" style={{ WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)", maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)" }}>
-                            <div className="flex shrink-0 gap-6 w-max animate-marquee">
-                                {[...REVIEWS, ...REVIEWS].map((r, i) => (
-                                    <div key={`${r.name}-${i}`}
-                                        className="w-[340px] md:w-[380px] p-8 rounded-3xl bg-[rgba(10,10,10,0.8)] border border-[var(--color-neon-border)] backdrop-blur-xl hover:border-[var(--color-neon-primary)]/40 transition-colors shadow-[0_8px_30px_rgba(0,0,0,0.4)] flex flex-col justify-between gap-6 group hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
-                                        <div className="flex items-center gap-1">
-                                            {[1, 2, 3, 4, 5].map((star) => {
-                                                const pathD = "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
-                                                if (r.rating >= star) {
-                                                    return <svg key={star} className="w-5 h-5 text-[#00e599]" fill="currentColor" viewBox="0 0 20 20"><path d={pathD} /></svg>;
-                                                } else if (r.rating >= star - 0.5) {
-                                                    return (
-                                                        <div key={star} className="relative w-5 h-5 text-[#00e599]">
-                                                            <svg className="absolute inset-0 w-5 h-5 opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d={pathD} /></svg>
-                                                            <div className="absolute inset-y-0 left-0 w-[50%] overflow-hidden">
-                                                                <svg className="w-5 h-5 max-w-none" fill="currentColor" viewBox="0 0 20 20"><path d={pathD} /></svg>
+
+                        <div className="max-w-6xl mx-auto relative z-10">
+                            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16 relative">
+                                <span className="section-label inline-flex !bg-[rgba(0,229,153,0.15)] !border-[rgba(0,229,153,0.4)] !text-[#00e599] backdrop-blur-md shadow-[0_0_20px_rgba(0,229,153,0.1)]">Wall of Love</span>
+                                <h2 className="mt-5 text-4xl md:text-5xl font-medium tracking-tight text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]">Loved by creators<br />and organizations</h2>
+                            </motion.div>
+
+                            <div className="relative flex overflow-hidden w-full max-w-7xl mx-auto py-8 lg:-mx-12 px-6 lg:px-12" style={{ WebkitMaskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)", maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)" }}>
+                                <div className="flex shrink-0 gap-6 w-max animate-marquee">
+                                    {[...REVIEWS, ...REVIEWS].map((r, i) => (
+                                        <div key={`${r.name}-${i}`}
+                                            className="w-[340px] md:w-[380px] p-8 rounded-3xl bg-[rgba(10,10,10,0.8)] border border-[var(--color-neon-border)] backdrop-blur-xl hover:border-[var(--color-neon-primary)]/40 transition-colors shadow-[0_8px_30px_rgba(0,0,0,0.4)] flex flex-col justify-between gap-6 group hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(0,0,0,0.5)]">
+                                            <div className="flex items-center gap-1">
+                                                {[1, 2, 3, 4, 5].map((star) => {
+                                                    const pathD = "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
+                                                    if (r.rating >= star) {
+                                                        return <svg key={star} className="w-5 h-5 text-[#00e599]" fill="currentColor" viewBox="0 0 20 20"><path d={pathD} /></svg>;
+                                                    } else if (r.rating >= star - 0.5) {
+                                                        return (
+                                                            <div key={star} className="relative w-5 h-5 text-[#00e599]">
+                                                                <svg className="absolute inset-0 w-5 h-5 opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d={pathD} /></svg>
+                                                                <div className="absolute inset-y-0 left-0 w-[50%] overflow-hidden">
+                                                                    <svg className="w-5 h-5 max-w-none" fill="currentColor" viewBox="0 0 20 20"><path d={pathD} /></svg>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return <svg key={star} className="w-5 h-5 text-[#00e599] opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d={pathD} /></svg>;
-                                            })}
-                                            <span className="text-[var(--color-neon-primary)] text-sm font-bold ml-1.5">{r.rating.toFixed(1)}</span>
-                                        </div>
-                                        <p className="text-[15px] text-white/70 leading-relaxed flex-1 group-hover:text-white transition-colors duration-300">
-                                            &quot;{r.text}&quot;
-                                        </p>
-                                        <div className="flex items-center gap-4 pt-6 border-t border-[var(--color-neon-border)]/50">
-                                            <div className="w-12 h-12 rounded-full bg-[var(--color-neon-primary)]/10 flex items-center justify-center text-[var(--color-neon-primary)] font-black text-lg border border-[var(--color-neon-primary)]/30 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(0,229,153,0.2)]">
-                                                {r.name.charAt(0)}
+                                                        );
+                                                    }
+                                                    return <svg key={star} className="w-5 h-5 text-[#00e599] opacity-30" fill="currentColor" viewBox="0 0 20 20"><path d={pathD} /></svg>;
+                                                })}
+                                                <span className="text-[var(--color-neon-primary)] text-sm font-bold ml-1.5">{r.rating.toFixed(1)}</span>
                                             </div>
-                                            <div>
-                                                <p className="text-white font-semibold text-sm">{r.name}</p>
-                                                <p className="text-[12px] text-[var(--color-neon-muted)] mt-0.5">{r.role}</p>
+                                            <p className="text-[15px] text-white/70 leading-relaxed flex-1 group-hover:text-white transition-colors duration-300">
+                                                &quot;{r.text}&quot;
+                                            </p>
+                                            <div className="flex items-center gap-4 pt-6 border-t border-[var(--color-neon-border)]/50">
+                                                <div className="w-12 h-12 rounded-full bg-[var(--color-neon-primary)]/10 flex items-center justify-center text-[var(--color-neon-primary)] font-black text-lg border border-[var(--color-neon-primary)]/30 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(0,229,153,0.2)]">
+                                                    {r.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-white font-semibold text-sm">{r.name}</p>
+                                                    <p className="text-[12px] text-[var(--color-neon-muted)] mt-0.5">{r.role}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
                 </div>
 
                 {/* ─── Pricing ─── */}
@@ -510,9 +519,9 @@ export default function LandingContent({ session }: { session: any }) {
                                         </div>
                                         <p className="text-[14px] text-[var(--color-neon-muted)] leading-relaxed">{plan.sub}</p>
                                     </div>
-                                    
+
                                     <div className="w-full h-[1px] bg-white/[0.06] mb-8" />
-                                    
+
                                     <ul className="flex flex-col gap-4 flex-1 mb-8">
                                         {plan.features.map(f => (
                                             <li key={f} className="flex items-start gap-3.5 text-[14px] text-white/80">
@@ -523,7 +532,7 @@ export default function LandingContent({ session }: { session: any }) {
                                             </li>
                                         ))}
                                     </ul>
-                                    
+
                                     <Link href="/register" className={`w-full py-3.5 rounded-xl text-center text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group ${plan.primary ? 'text-[var(--color-neon-primary)] border border-[var(--color-neon-primary)] hover:bg-[var(--color-neon-primary)]/10 text-[var(--color-neon-primary)]' : 'text-white border border-white/20 hover:bg-white/5 hover:border-white/40'}`}>
                                         {plan.primary ? "Start Free Trial" : "Get Started"}
                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -537,7 +546,7 @@ export default function LandingContent({ session }: { session: any }) {
                 {/* ─── CTA ─── */}
                 <div className="px-4 py-12 md:px-8 w-full max-w-[1400px] mx-auto">
                     <section className="py-24 px-6 relative overflow-hidden bg-[#030604] rounded-[2.5rem] md:rounded-[3.5rem] border border-[var(--color-neon-border)] shadow-2xl">
-                        
+
                         {/* Crisp Geometric Grid Background */}
                         <div className="absolute inset-0 z-0 pointer-events-none" style={{
                             backgroundImage: `
@@ -548,7 +557,7 @@ export default function LandingContent({ session }: { session: any }) {
                             maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, transparent 100%)',
                             WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, transparent 100%)'
                         }} />
-                        
+
                         {/* Top Accent Line */}
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-neon-primary)]/40 to-transparent" />
 
@@ -567,11 +576,11 @@ export default function LandingContent({ session }: { session: any }) {
             <footer className="relative bg-[#02040A] pt-16 pb-8 px-6 border-t border-[var(--color-neon-border)]/50 mt-20">
                 {/* Subtle top glow */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-neon-primary)]/20 to-transparent" />
-                
+
                 <div className="max-w-7xl mx-auto">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-12 mb-16">
                         <div className="col-span-2 flex flex-col items-start">
-                            <Link href="/" className="flex items-center gap-2 mb-6 w-fit group">
+                            <Link href="/" aria-label="Vura home" className="flex items-center gap-2 mb-6 w-fit group cursor-pointer">
                                 <img src="/vuralogo.png" alt="Vura Logo" className="w-8 h-8 object-contain transition-transform group-hover:scale-110" />
                                 <span className="text-lg font-bold tracking-widest uppercase text-white">Vura</span>
                             </Link>
@@ -586,7 +595,7 @@ export default function LandingContent({ session }: { session: any }) {
                                 ))}
                             </div>
                         </div>
-                        
+
                         <div className="col-span-1">
                             <p className="text-xs font-semibold text-white uppercase tracking-wider mb-5">Product</p>
                             <ul className="flex flex-col gap-3.5">
@@ -609,7 +618,7 @@ export default function LandingContent({ session }: { session: any }) {
                             </ul>
                         </div>
                     </div>
-                    
+
                     <div className="pt-8 border-t border-white/[0.05] flex flex-col md:flex-row items-center justify-between gap-4">
                         <p className="text-[12px] text-[#666]">
                             © {new Date().getFullYear()} <a href="https://omnarkhede.tech" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">Om Narkhede</a>. All rights reserved.

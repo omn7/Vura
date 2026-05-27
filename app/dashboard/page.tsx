@@ -1,17 +1,21 @@
-'use client';
-
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, Award, TrendingUp, Calendar, AlertTriangle, ExternalLink, ShieldCheck } from "lucide-react";
 import CertificatesGrid from "@/components/CertificatesGrid";
+import CopyLinkButton from "@/components/CopyLinkButton";
 
 export default async function DashboardPage() {
     const session = await getServerSession(authOptions);
 
+    if (!session || !session.user || !(session.user as any).id) {
+        redirect("/login");
+    }
+
     const certificates = await prisma.certificate.findMany({
-        where: { userId: session!.user.id },
+        where: { userId: (session.user as any).id },
         orderBy: { createdAt: "desc" },
     });
 
@@ -115,23 +119,7 @@ export default async function DashboardPage() {
                                         <td>
                                             <div className="flex items-center justify-end gap-2">
                                                 {/* COPY LINK BUTTON - GSSoC 2026 Feature */}
-                                                <button
-                                                    onClick={async () => {
-                                                        const url = `https://vurakit.vercel.app/verify/${cert.certificateId}`;
-                                                        try {
-                                                            await navigator.clipboard.writeText(url);
-                                                            alert(`✅ Link copied!\n\n${url}`);
-                                                        } catch (err) {
-                                                            alert(`⚠️ Please copy manually:\n${url}`);
-                                                        }
-                                                    }}
-                                                    className="p-1.5 text-[var(--color-neon-muted)] hover:text-[var(--color-neon-primary)] hover:bg-[var(--color-neon-primary)]/08 rounded-lg transition-colors"
-                                                    title="Copy verification link"
-                                                >
-                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                                    </svg>
-                                                </button>
+                                                <CopyLinkButton url={`https://vurakit.vercel.app/verify/${cert.certificateId}`} />
 
                                                 {/* View PDF Button */}
                                                 <a href={cert.pdfUrl} target="_blank" rel="noreferrer"
@@ -157,7 +145,14 @@ export default async function DashboardPage() {
                     {/* Full grid below */}
                     <div className="pt-2">
                         <h2 className="text-sm font-semibold text-white mb-4">All Certificates</h2>
-                        <CertificatesGrid initialCerts={certificates} />
+                        <CertificatesGrid initialCerts={certificates.map(c => ({
+                            certificateId: c.certificateId,
+                            name: c.name,
+                            course: c.course,
+                            issueDate: c.issueDate,
+                            pdfUrl: c.pdfUrl,
+                            revoked: c.revoked
+                        }))} />
                     </div>
                 </>
             )}

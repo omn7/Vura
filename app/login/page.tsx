@@ -7,6 +7,27 @@ import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+    CredentialsSignin: "Invalid email or password",
+    "User not found": "No account exists with that email address.",
+    "Invalid password": "The password you entered is incorrect.",
+    "Too many failed login attempts. Please try again later.": "Too many failed login attempts. Please try again later.",
+    "This account uses Google sign-in. Please continue with Google.": "This account was created with Google. Continue with Google sign-in.",
+    OAuthSignin: "Google sign-in failed. Check your OAuth client credentials and redirect URI.",
+    OAuthCallback: "Google sign-in failed during callback. Verify NEXTAUTH_URL and your Google OAuth redirect URI.",
+    OAuthAccountNotLinked: "This account is already linked to another sign-in method.",
+    AccessDenied: "Access to Google sign-in was denied.",
+    Configuration: "Authentication is not configured correctly. Check GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and NEXTAUTH_SECRET.",
+}
+
+const getAppCallbackUrl = () => {
+    if (typeof window === "undefined") {
+        return "/app";
+    }
+
+    return new URL("/app", window.location.origin).toString();
+}
+
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -16,7 +37,7 @@ function LoginContent() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(authError === "CredentialsSignin" ? "Invalid email or password" : "");
+    const [error, setError] = useState(authError ? AUTH_ERROR_MESSAGES[authError] || "Sign in failed." : "");
 
     const handleCredentialsLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,12 +50,27 @@ function LoginContent() {
             password,
         });
 
-        if (res?.error) {
-            setError("Invalid email or password");
+        if (!res?.ok || res?.error) {
+            setError(res?.error ? (AUTH_ERROR_MESSAGES[res.error as keyof typeof AUTH_ERROR_MESSAGES] || "Invalid email or password") : "Invalid email or password");
+        if (!res?.ok || res.error) {
+            const errorKey = res?.error ?? "";
+            setError(AUTH_ERROR_MESSAGES[errorKey] || "Invalid email or password");
             setLoading(false);
+            return;
         } else {
             router.push("/app");
             router.refresh();
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        setError("");
+
+        try {
+            await signIn("google", { callbackUrl: getAppCallbackUrl() });
+        } catch (err) {
+            console.error("Google sign-in failed:", err);
+            setError("Google sign-in failed. Check the provider configuration and environment variables.");
         }
     };
 
@@ -44,7 +80,14 @@ function LoginContent() {
 
             <div className="w-full max-w-md glass-card p-10 flex flex-col items-center text-center relative z-10 shadow-2xl">
                 <Link href="/" className="text-[var(--color-neon-primary)] font-bold text-2xl mb-8 tracking-widest uppercase flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <Image src="/vuralogo.png" alt="Vura Logo" width={32} height={32} className="rounded-lg object-contain" />
+                    <Image
+                        src="/vuralogo.png"
+                        alt="Vura Logo"
+                        width={32}
+                        height={32}
+                        style={{ width: "auto", height: "auto" }}
+                        className="rounded-lg object-contain"
+                    />
                     Vura
                 </Link>
 
@@ -71,6 +114,10 @@ function LoginContent() {
                         <label className="text-xs text-[var(--color-neon-muted)] ml-1">Email Address</label>
                         <input
                             type="email"
+                            name="email"
+                            autoComplete="email"
+                            autoCapitalize="none"
+                            spellCheck={false}
                             required
                             value={email}
                             onChange={e => setEmail(e.target.value)}
@@ -85,6 +132,8 @@ function LoginContent() {
                         </div>
                         <input
                             type="password"
+                            name="password"
+                            autoComplete="current-password"
                             required
                             value={password}
                             onChange={e => setPassword(e.target.value)}
@@ -108,7 +157,8 @@ function LoginContent() {
                 </div>
 
                 <button
-                    onClick={() => signIn("google", { callbackUrl: "/app" })}
+                    type="button"
+                    onClick={handleGoogleLogin}
                     className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 px-6 rounded-xl font-semibold hover:bg-gray-200 transition-colors shadow-lg"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

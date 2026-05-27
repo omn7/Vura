@@ -7,13 +7,20 @@ import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validations";
 
 import {
+    clearFailedAttempts,
+    getRateLimitKey,
     isBlocked,
     recordFailedAttempt,
-    clearFailedAttempts,
+    AUTH_RATE_LIMIT_MESSAGE,
 } from "@/lib/rate-limit";
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma) as any,
+    secret: process.env.NEXTAUTH_SECRET,
+    pages: {
+        signIn: "/login",
+        error: "/login",
+    },
 
     providers: [
         GoogleProvider({
@@ -25,75 +32,53 @@ export const authOptions: NextAuthOptions = {
             name: "Credentials",
 
             credentials: {
-                email: {
-                    label: "Email",
-                    type: "email",
-                },
-
-                password: {
-                    label: "Password",
-                    type: "password",
-                },
+                email: { label: "Email", type: "email" },
+                password: { label: "Password", type: "password" },
             },
 
-            async authorize(credentials, req) {
-                if (
-                    !credentials?.email ||
-                    !credentials?.password
-                ) {
+            authorize: async (credentials, req) => {
+                if (!credentials || !credentials.email || !credentials.password) {
                     return null;
                 }
 
-                const forwardedFor =
-                    req?.headers?.["x-forwarded-for"];
-
+                const forwardedFor = req?.headers?.["x-forwarded-for"];
                 const ip = Array.isArray(forwardedFor)
                     ? forwardedFor[0]
-                    : forwardedFor?.split(",")[0] ||
-                      "unknown";
+                    : forwardedFor?.split(",")[0] || "unknown";
 
                 const rateLimitKey = `${ip}:${credentials.email}`;
 
-                const blockStatus =
-                    isBlocked(rateLimitKey);
-
+                const blockStatus = isBlocked(rateLimitKey);
                 if (blockStatus.blocked) {
-                    return null;
+                    throw new Error("Too many failed login attempts. Please try again later.");
                 }
+                if (blockStatus.blocked) return null;
 
-                const user =
-                    await prisma.user.findUnique({
-                        where: {
-                            email: credentials.email,
-                        },
-                    });
-            async authorize(credentials) {
+                // Validate input shape
                 const parsed = loginSchema.safeParse(credentials);
+
                 if (!parsed.success) {
-                    throw new Error(parsed.error.errors[0].message);
+                    recordFailedAttempt(rateLimitKey);
+                    throw new Error(
+                        parsed.error.issues[0].message
+                    );
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: parsed.data.email }
-                });
-
+                const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
                 if (!user || !user.password) {
                     recordFailedAttempt(rateLimitKey);
-
-                    return null;
+                    throw new Error("User not found");
                 }
 
-                const isPasswordValid =
-                    await bcrypt.compare(
-                        credentials.password,
-                        user.password
-                    );
-                const isPasswordValid = await bcrypt.compare(parsed.data.password, user.password);
+                if (!user.password) {
+                    recordFailedAttempt(rateLimitKey);
+                    throw new Error("This account uses Google sign-in. Please continue with Google.");
+                }
 
+                const isPasswordValid = await bcrypt.compare(parsed.data.password, user.password);
                 if (!isPasswordValid) {
                     recordFailedAttempt(rateLimitKey);
-
-                    return null;
+                    throw new Error("Invalid password");
                 }
 
                 clearFailedAttempts(rateLimitKey);

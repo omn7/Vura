@@ -52,51 +52,54 @@ export async function generateCertificate(
     // Render Name
     if (!settings || settings?.name?.enabled) {
         const textToDraw = data.name;
-        const fontSize = settings ? settings.name.size : 32;
-        const fontToUse = settings ? getFont(settings.name.fontStyle) : helveticaBold;
+        const nameCfg = settings?.name;
+        const fontSize = nameCfg?.size ?? 32;
+        const fontToUse = nameCfg ? getFont(nameCfg.fontStyle) : helveticaBold;
         const textWidth = fontToUse.widthOfTextAtSize(textToDraw, fontSize);
-        const startX = settings ? getX(settings.name.x) : centerX;
+        const startX = nameCfg?.x != null ? getX(nameCfg.x) : centerX;
 
         firstPage.drawText(textToDraw, {
             x: startX - (textWidth / 2),
-            y: settings ? getY(settings.name.y) : height / 2 + 50,
+            y: nameCfg?.y != null ? getY(nameCfg.y) : height / 2 + 50,
             size: fontSize,
             font: fontToUse,
-            color: settings ? hexToRgb(settings.name.hex) : rgb(0, 0, 0),
+            color: nameCfg?.hex ? hexToRgb(nameCfg.hex) : rgb(0, 0, 0),
         })
     }
 
     // Render Course
     if (!settings || settings?.course?.enabled) {
         const textToDraw = data.course;
-        const fontSize = settings ? settings.course.size : 20;
-        const fontToUse = settings ? getFont(settings.course.fontStyle) : helvetica;
+        const courseCfg = settings?.course;
+        const fontSize = courseCfg?.size ?? 20;
+        const fontToUse = courseCfg ? getFont(courseCfg.fontStyle) : helvetica;
         const textWidth = fontToUse.widthOfTextAtSize(textToDraw, fontSize);
-        const startX = settings ? getX(settings.course.x) : centerX;
+        const startX = courseCfg?.x != null ? getX(courseCfg.x) : centerX;
 
         firstPage.drawText(textToDraw, {
             x: startX - (textWidth / 2),
-            y: settings ? getY(settings.course.y) : height / 2,
+            y: courseCfg?.y != null ? getY(courseCfg.y) : height / 2,
             size: fontSize,
             font: fontToUse,
-            color: settings ? hexToRgb(settings.course.hex) : rgb(0.2, 0.2, 0.2),
+            color: courseCfg?.hex ? hexToRgb(courseCfg.hex) : rgb(0.2, 0.2, 0.2),
         })
     }
 
     // Render Issue Date
     if (!settings || settings?.issueDate?.enabled) {
-        const textToDraw = settings ? data.issueDate : `Date: ${data.issueDate}`;
-        const fontSize = settings ? settings.issueDate.size : 14;
-        const fontToUse = settings ? getFont(settings.issueDate.fontStyle) : helvetica;
+        const issueCfg = settings?.issueDate;
+        const textToDraw = issueCfg ? data.issueDate : `Date: ${data.issueDate}`;
+        const fontSize = issueCfg?.size ?? 14;
+        const fontToUse = issueCfg ? getFont(issueCfg.fontStyle) : helvetica;
         const textWidth = fontToUse.widthOfTextAtSize(textToDraw, fontSize);
-        const startX = settings ? getX(settings.issueDate.x) : centerX;
+        const startX = issueCfg?.x != null ? getX(issueCfg.x) : centerX;
 
         firstPage.drawText(textToDraw, { // don't prefix with "Date:" if custom configured
             x: startX - (textWidth / 2),
-            y: settings ? getY(settings.issueDate.y) : height / 2 - 40,
+            y: issueCfg?.y != null ? getY(issueCfg.y) : height / 2 - 40,
             size: fontSize,
             font: fontToUse,
-            color: settings ? hexToRgb(settings.issueDate.hex) : rgb(0, 0, 0),
+            color: issueCfg?.hex ? hexToRgb(issueCfg.hex) : rgb(0, 0, 0),
         })
     }
 
@@ -118,13 +121,13 @@ export async function generateCertificate(
 
         const qrImage = await pdfDoc.embedPng(qrBuffer)
 
-        const defaultScale = 0.5;
-        const scale = settings ? settings.qrCode.scale : defaultScale;
+        const qrCfg = settings?.qrCode;
+        const scale = qrCfg?.scale ?? 0.5;
         const qrDims = qrImage.scale(scale);
 
         // Map the center point of the graphic, offsetting by half its width/height
-        const centerXPos = settings ? getX(settings.qrCode.x) : width - qrDims.width - 50;
-        const centerYPos = settings ? getY(settings.qrCode.y) : 50;
+        const centerXPos = qrCfg?.x != null ? getX(qrCfg.x) : width - qrDims.width - 50;
+        const centerYPos = qrCfg?.y != null ? getY(qrCfg.y) : 50;
 
         firstPage.drawImage(qrImage, {
             x: centerXPos - (qrDims.width / 2),
