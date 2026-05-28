@@ -10,7 +10,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
-[![Visitors](https://api.visitorbadge.io/api/visitors?path=omn7.Vura&label=Visitors&labelColor=%23000000&countColor=%236366f1&style=for-the-badge)](https://visitorbadge.io/status?path=omn7.Vura)
+[![Visitors](https://hits.sh/github.com/omn7/Vura.svg?view=today-total&style=for-the-badge&label=Visitors&color=6366f1)](https://hits.sh/github.com/omn7/Vura/)
 
 </div>
 
