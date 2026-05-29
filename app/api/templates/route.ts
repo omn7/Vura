@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
+    const existing = await prisma.template.findUnique({ where: { eventId } })
+
     // Upsert template (create or update if already exists for this event)
     const template = await prisma.template.upsert({
       where: { eventId },
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    return NextResponse.json(template, { status: 200 })
+    return NextResponse.json(template, { status: existing ? 200 : 201 })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     return NextResponse.json(

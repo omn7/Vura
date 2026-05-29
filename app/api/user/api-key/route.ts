@@ -38,5 +38,5 @@ export async function POST() {
         select: { apiKey: true },
     });
 
-    return NextResponse.json({ apiKey: user.apiKey }, { status: 200 });
+    return NextResponse.json({ apiKey: user.apiKey }, { status: 201 });
 }
