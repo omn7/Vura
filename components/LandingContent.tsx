@@ -232,7 +232,7 @@ export default function LandingContent({ session }: { session: any }) {
               alt="Vura Logo"
               className="w-10 h-10 object-contain transition-transform group-hover:scale-105"
             />
-            <span className="text-xl font-black tracking-widest uppercase text-white">
+            <span className="text-xl font-black tracking-widest uppercase text-white hidden sm:inline">
               VURA
             </span>
           </Link>
