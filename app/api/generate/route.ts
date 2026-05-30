@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateBatchId, generateCertificateId } from "@/lib/certificateIds";
 import { sendCertificateEmail } from "@/lib/certificateEmail";
+import { validateTemplateFile, validateDatasetFile } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +61,22 @@ export async function POST(req: NextRequest) {
     if (!templateFile || !datasetFile) {
       return NextResponse.json(
         { error: "Missing template or dataset file." },
+        { status: 400 },
+      );
+    }
+
+    const templateValidationError = validateTemplateFile(templateFile);
+    if (templateValidationError) {
+      return NextResponse.json(
+        { error: templateValidationError.error },
+        { status: 400 },
+      );
+    }
+
+    const datasetValidationError = validateDatasetFile(datasetFile);
+    if (datasetValidationError) {
+      return NextResponse.json(
+        { error: datasetValidationError.error },
         { status: 400 },
       );
     }
