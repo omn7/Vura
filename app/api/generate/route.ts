@@ -7,6 +7,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateBatchId, generateCertificateId } from "@/lib/certificateIds";
 import { sendCertificateEmail } from "@/lib/certificateEmail";
+import {
+  validateTemplateFile,
+  validateDatasetFile,
+  validateRowCount,
+} from "@/lib/file-validation";
 import { validateTemplateFile, validateDatasetFile } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
@@ -65,19 +70,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const templateValidationError = validateTemplateFile(templateFile);
-    if (templateValidationError) {
+    const templateErr = validateTemplateFile(templateFile);
+    if (templateErr) {
       return NextResponse.json(
-        { error: templateValidationError.error },
-        { status: 400 },
+        { error: templateErr.message },
+        { status: templateErr.status },
       );
     }
 
-    const datasetValidationError = validateDatasetFile(datasetFile);
-    if (datasetValidationError) {
+    const datasetErr = validateDatasetFile(datasetFile);
+    if (datasetErr) {
       return NextResponse.json(
-        { error: datasetValidationError.error },
-        { status: 400 },
+        { error: datasetErr.message },
+        { status: datasetErr.status },
       );
     }
 
@@ -227,6 +232,14 @@ export async function POST(req: NextRequest) {
           error: `No data containing the required columns (${requiredColsDisplay.join(", ")}) was found.`,
         },
         { status: 400 },
+      );
+    }
+
+    const rowCountErr = validateRowCount(rows.length);
+    if (rowCountErr) {
+      return NextResponse.json(
+        { error: rowCountErr.message },
+        { status: rowCountErr.status },
       );
     }
 
