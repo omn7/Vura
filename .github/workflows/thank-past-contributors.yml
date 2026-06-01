@@ -35,9 +35,18 @@ jobs:
               per_page: 100
             });
             
+            console.log(`Total closed PRs fetched: ${prs.length}`);
+            if (prs.length > 0) {
+              console.log("First 10 closed PRs sample:");
+              prs.slice(0, 10).forEach(pr => {
+                console.log(`- PR #${pr.number} by @${pr.user.login} | Merged At: ${pr.merged_at} | State: ${pr.state}`);
+              });
+            }
+            
             const mergedPRs = prs.filter(pr => pr.merged_at && pr.user.login !== 'omn7');
             
             console.log(`Found ${mergedPRs.length} merged PRs to thank contributors for`);
+
             
             const commentBody = `Thank you so much for contributing to Vura! 🙏 Your efforts are greatly appreciated and help make this project better.
 
