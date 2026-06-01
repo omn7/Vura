@@ -46,7 +46,6 @@ export async function POST(req: Request) {
         }
 
         const email = parsed.data.email.toLowerCase();
-        recordFailedAttempt(rateLimitKey);
 
         const user = await prisma.user.findUnique({
             where: { email },
