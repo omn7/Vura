@@ -4,7 +4,7 @@ import { generateCertificate } from "@/lib/generateCertificate";
 import { uploadToS3 } from "@/lib/s3";
 import { generateCertificateId } from "@/lib/certificateIds";
 import { sendCertificateEmail } from "@/lib/certificateEmail";
-import { validateTemplateUrl } from "@/lib/url-validation";
+import { safeFetch } from "@/lib/url-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -87,21 +87,12 @@ export async function POST(req: NextRequest) {
     });
 
     // ── 4. Validate and fetch the PDF template ────────────────────────────
-    const urlValidation = await validateTemplateUrl(templateUrl);
-    if (!urlValidation.valid) {
-        await prisma.certificate.update({
-            where: { certificateId },
-            data: { status: "failed", failureReason: urlValidation.error ?? "Invalid template URL." },
-        });
-        return NextResponse.json(
-            { error: urlValidation.error ?? "Invalid template URL." },
-            { status: 400, headers: corsHeaders }
-        );
-    }
-
+    // safeFetch validates the URL (scheme, hostname, resolved IPs) at every
+    // hop and follows redirects manually so a public URL cannot redirect to
+    // an internal host or cloud metadata endpoint.
     let templateBuffer: ArrayBuffer;
     try {
-        const templateRes = await fetch(templateUrl);
+        const templateRes = await safeFetch(templateUrl);
         if (!templateRes.ok) {
             await prisma.certificate.update({
                 where: { certificateId },
@@ -120,7 +111,7 @@ export async function POST(req: NextRequest) {
             data: { status: "failed", failureReason: message },
         });
         return NextResponse.json(
-            { error: "Could not reach templateUrl. Ensure it is a valid, publicly accessible PDF URL." },
+            { error: message },
             { status: 400, headers: corsHeaders }
         );
     }

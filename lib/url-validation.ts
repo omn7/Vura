@@ -14,6 +14,8 @@ const BLOCKED_IPV4_RANGES: Array<{ prefix: number; mask: number }> = [
     { prefix: 0x00000000, mask: 0xFF000000 },   // 0.0.0.0/8
 ];
 
+const MAX_REDIRECTS = 5;
+
 function ipv4ToInt(ip: string): number {
     const parts = ip.split(".");
     if (parts.length !== 4) return -1;
@@ -43,7 +45,7 @@ function isPrivateIPv6(ip: string): boolean {
     return false;
 }
 
-export async function validateTemplateUrl(
+async function validateUrl(
     url: string
 ): Promise<{ valid: boolean; error?: string }> {
     let parsed: URL;
@@ -119,4 +121,31 @@ export async function validateTemplateUrl(
     }
 
     return { valid: true };
+}
+
+export async function safeFetch(url: string): Promise<Response> {
+    let currentUrl = url;
+
+    for (let i = 0; i <= MAX_REDIRECTS; i++) {
+        const validation = await validateUrl(currentUrl);
+        if (!validation.valid) {
+            throw new Error(validation.error ?? "Invalid URL.");
+        }
+
+        const response = await fetch(currentUrl, { redirect: "manual" });
+
+        const status = response.status;
+        if (status >= 300 && status < 400) {
+            const location = response.headers.get("location");
+            if (!location) {
+                throw new Error("Redirect response missing Location header.");
+            }
+            currentUrl = new URL(location, currentUrl).toString();
+            continue;
+        }
+
+        return response;
+    }
+
+    throw new Error(`Too many redirects (exceeded ${MAX_REDIRECTS}).`);
 }
