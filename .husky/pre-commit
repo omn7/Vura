@@ -1,1 +1,0 @@
--e "exec < /dev/tty\noops --pre-commit" 
