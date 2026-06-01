@@ -1,0 +1,54 @@
+name: Thank Past Contributors
+
+on:
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+  schedule:
+    - cron: '0 0 1 * *' # Automatically runs on the 1st of every month
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  thank-contributors:
+    name: Generate Appreciation Log
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch and Thank Contributors
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: contributors } = await github.rest.repos.listContributors({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            console.log("=========================================================");
+            console.log(" 💖 THANK YOU TO VURA'S AMAZING OPEN-SOURCE CONTRIBUTORS 💖 ");
+            console.log("=========================================================");
+            
+            if (!contributors || contributors.length === 0) {
+              console.log("No contributors found yet. Be the first to contribute to Vura!");
+              return;
+            }
+
+            let markdownList = "### 💖 Vura Contributor Wall of Fame 💖\n\nWe would like to express our deepest gratitude to all the incredible developers who have contributed to the Vura open-source repository! Your hard work and dedication keep Vura moving forward.\n\n";
+
+            for (const c of contributors) {
+              console.log(`✨ @${c.login} - ${c.contributions} contributions`);
+              markdownList += `- **[@${c.login}](${c.html_url})** (${c.contributions} contributions) 🎉\n`;
+            }
+
+            console.log("=========================================================");
+            console.log("Generating dynamic contributors summary...");
+            console.log("=========================================================");
+            console.log(markdownList);
