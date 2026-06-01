@@ -1,10 +1,18 @@
 name: Thank Past Contributors
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+  schedule:
+    - cron: '0 0 1 * *' # Automatically runs on the 1st of every month
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   thank-past-contributors:
+    name: Thank Merged Contributors
     runs-on: ubuntu-latest
     
     steps:
@@ -64,3 +72,4 @@ We're grateful for your support!`;
             }
             
             console.log('Completed thanking all past contributors!');
+
