@@ -4,6 +4,7 @@ import { generateCertificate } from "@/lib/generateCertificate";
 import { uploadToS3 } from "@/lib/s3";
 import { generateCertificateId } from "@/lib/certificateIds";
 import { sendCertificateEmail } from "@/lib/certificateEmail";
+import { validateTemplateUrl } from "@/lib/url-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +86,19 @@ export async function POST(req: NextRequest) {
         },
     });
 
-    // ── 4. Fetch the PDF template ────────────────────────────────────────
+    // ── 4. Validate and fetch the PDF template ────────────────────────────
+    const urlValidation = await validateTemplateUrl(templateUrl);
+    if (!urlValidation.valid) {
+        await prisma.certificate.update({
+            where: { certificateId },
+            data: { status: "failed", failureReason: urlValidation.error ?? "Invalid template URL." },
+        });
+        return NextResponse.json(
+            { error: urlValidation.error ?? "Invalid template URL." },
+            { status: 400, headers: corsHeaders }
+        );
+    }
+
     let templateBuffer: ArrayBuffer;
     try {
         const templateRes = await fetch(templateUrl);
