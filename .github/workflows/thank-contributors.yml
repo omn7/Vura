@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [closed]
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   thank-contributor:
     runs-on: ubuntu-latest
@@ -23,7 +28,14 @@ jobs:
               return;
             }
             
+            const mergeCommitSha = pr.merge_commit_sha ? pr.merge_commit_sha.slice(0, 7) : '';
+            const mergeCommitUrl = pr.merge_commit_sha ? `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${pr.merge_commit_sha}` : '';
+            
             const commentBody = `Thank you so much for contributing to Vura! 🙏 Your efforts are greatly appreciated and help make this project better.
+
+### 📊 Merge Details:
+- **Pull Request:** #${context.issue.number}
+- **Merge Commit:** [${mergeCommitSha}](${mergeCommitUrl})
 
 If you'd like to download your contribution certificate and view your profile, please visit:
 https://vurakit.vercel.app/contributor
@@ -36,3 +48,4 @@ We're grateful for your support!`;
               repo: context.repo.repo,
               body: commentBody
             });
+

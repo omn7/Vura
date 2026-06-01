@@ -1,9 +1,12 @@
 name: Thank Past Contributors
 
 on:
+  push:
+    branches: ["feature/contributor-certificates-and-sponsors"]
   workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
   schedule:
     - cron: '0 0 1 * *' # Automatically runs on the 1st of every month
+
 
 permissions:
   contents: read
@@ -32,17 +35,18 @@ jobs:
               per_page: 100
             });
             
+            console.log(`Total closed PRs fetched: ${prs.length}`);
+            if (prs.length > 0) {
+              console.log("First 10 closed PRs sample:");
+              prs.slice(0, 10).forEach(pr => {
+                console.log(`- PR #${pr.number} by @${pr.user.login} | Merged At: ${pr.merged_at} | State: ${pr.state}`);
+              });
+            }
+            
             const mergedPRs = prs.filter(pr => pr.merged_at && pr.user.login !== 'omn7');
             
             console.log(`Found ${mergedPRs.length} merged PRs to thank contributors for`);
-            
-            const commentBody = `Thank you so much for contributing to Vura! 🙏 Your efforts are greatly appreciated and help make this project better.
 
-If you'd like to download your contribution certificate and view your profile, please visit:
-https://vurakit.vercel.app/contributor
-
-We're grateful for your support!`;
-            
             for (const pr of mergedPRs) {
               const comments = await github.rest.issues.listComments({
                 owner: owner,
@@ -56,6 +60,20 @@ We're grateful for your support!`;
               
               if (!alreadyCommented) {
                 try {
+                  const mergeCommitSha = pr.merge_commit_sha ? pr.merge_commit_sha.slice(0, 7) : '';
+                  const mergeCommitUrl = pr.merge_commit_sha ? `https://github.com/${owner}/${repo}/commit/${pr.merge_commit_sha}` : '';
+                  
+                  const commentBody = `Thank you so much for contributing to Vura! 🙏 Your efforts are greatly appreciated and help make this project better.
+
+### 📊 Merge Details:
+- **Pull Request:** #${pr.number}
+- **Merge Commit:** [${mergeCommitSha}](${mergeCommitUrl})
+
+If you'd like to download your contribution certificate and view your profile, please visit:
+https://vurakit.vercel.app/contributor
+
+We're grateful for your support!`;
+
                   await github.rest.issues.createComment({
                     owner: owner,
                     repo: repo,
