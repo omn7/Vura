@@ -184,6 +184,9 @@ Check out our official project details and tracking here: **[Vura on GSSoC Porta
 
 ---
 
+**Contributor Recognition**: We value your effort! Once your Pull Request is successfully merged into the repository, your name will be featured on our Contributor Wall, and you will be issued a digital certificate of contribution for your work on Vura. https://vurakit.vercel.app/contributor
+
+
 ## Author
 
 **Om Narkhede** — [omnarkhede.tech](https://omnarkhede.tech) · [LinkedIn](https://linkedin.com/in/omnarkhede) · [@omn7](https://github.com/omn7)
