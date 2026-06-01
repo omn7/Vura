@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
     const searchParams = new URL(req.url).searchParams;
     const search = (searchParams.get("search") ?? "").trim();
     const status = (searchParams.get("status") ?? "").trim();
-    const page = searchParams.get("page");
-    const limit = searchParams.get("limit");
+    const page = searchParams.get("page") ?? undefined;
+    const limit = searchParams.get("limit") ?? undefined;
 
     // Parse and validate pagination parameters
     const { page: parsedPage, limit: parsedLimit } = parsePaginationParams(page, limit);
@@ -44,9 +44,9 @@ export async function GET(req: NextRequest) {
             ...(search
                 ? {
                       OR: [
-                          { name: { contains: search, mode: "insensitive" } },
-                          { recipientEmail: { contains: search, mode: "insensitive" } },
-                          { certificateId: { contains: search, mode: "insensitive" } },
+                          { name: { contains: search, mode: "insensitive" as const } },
+                          { recipientEmail: { contains: search, mode: "insensitive" as const } },
+                          { certificateId: { contains: search, mode: "insensitive" as const } },
                       ],
                   }
                 : {}),

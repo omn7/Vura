@@ -251,10 +251,16 @@ export default function LandingContent({ session }: { session: any }) {
               How It Works
             </Link>
             <Link
-              href="#pricing"
+              href="/contributor"
               className="hover:text-white transition-colors"
             >
-              Pricing
+              Contributors
+            </Link>
+            <Link
+              href="/sponsor"
+              className="hover:text-white transition-colors"
+            >
+              Sponsor
             </Link>
             <Link
               href="/docs"
@@ -446,11 +452,18 @@ export default function LandingContent({ session }: { session: any }) {
                   How It Works
                 </Link>
                 <Link
-                  href="#pricing"
+                  href="/contributor"
                   onClick={closeMobileMenu}
                   className="hover:text-white py-1"
                 >
-                  Pricing
+                  Contributors
+                </Link>
+                <Link
+                  href="/sponsor"
+                  onClick={closeMobileMenu}
+                  className="hover:text-white py-1 transition-colors"
+                >
+                  Sponsor
                 </Link>
                 <Link
                   href="/docs"
@@ -1012,118 +1025,6 @@ export default function LandingContent({ session }: { session: any }) {
           </section>
         </div>
 
-        {/* ─── Pricing ─── */}
-        <section id="pricing" className="py-28 px-6">
-          <div className="max-w-5xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight text-white mb-4 leading-tight">
-                Simple, transparent pricing
-              </h2>
-              <p className="text-lg text-[var(--color-neon-muted)]">
-                Start for free. Scale when you need it.
-              </p>
-            </motion.div>
-            <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto relative relative z-10">
-              {[
-                {
-                  name: "Free",
-                  price: "₹0",
-                  sub: "No credit card required",
-                  primary: false,
-                  features: [
-                    "Up to 100 certificates/month",
-                    "Google & Email login",
-                    "S3 cloud storage",
-                    "QR verification links",
-                    "API access + secret key",
-                    "Usage stats dashboard",
-                  ],
-                },
-                {
-                  name: "Pro",
-                  price: "₹999",
-                  sub: "For teams and events",
-                  primary: true,
-                  features: [
-                    "Unlimited certificates",
-                    "Everything in Free",
-                    "Custom branding",
-                    "Priority support",
-                    "Bulk export & analytics",
-                  ],
-                },
-              ].map((plan, i) => (
-                <motion.div
-                  key={plan.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className={`bg-[#050505] rounded-2xl p-8 flex flex-col relative border transition-all duration-300 overflow-hidden ${plan.primary ? "border-[var(--color-neon-primary)]/40 hover:border-[var(--color-neon-primary)] shadow-[0_4px_30px_rgba(0,0,0,0.8)]" : "border-white/10 hover:border-white/20 shadow-xl"}`}
-                >
-                  {plan.primary && (
-                    <div className="absolute top-0 right-0 px-4 py-1.5 text-[11px] font-bold tracking-widest uppercase bg-[var(--color-neon-primary)]/10 text-[var(--color-neon-primary)] border-b border-l border-[var(--color-neon-primary)]/20 rounded-bl-2xl">
-                      Popular
-                    </div>
-                  )}
-                  <div className="mb-6">
-                    <p
-                      className={`text-[12px] font-semibold uppercase tracking-[0.2em] mb-4 ${plan.primary ? "text-[var(--color-neon-primary)]" : "text-[#888]"}`}
-                    >
-                      {plan.name}
-                    </p>
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <span className="text-5xl font-semibold tracking-tighter text-white">
-                        {plan.price}
-                      </span>
-                      <span className="text-sm font-medium text-[var(--color-neon-muted)]">
-                        / mo
-                      </span>
-                    </div>
-                    <p className="text-[14px] text-[var(--color-neon-muted)] leading-relaxed">
-                      {plan.sub}
-                    </p>
-                  </div>
-
-                  <div className="w-full h-[1px] bg-white/[0.06] mb-8" />
-
-                  <ul className="flex flex-col gap-4 flex-1 mb-8">
-                    {plan.features.map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-start gap-3.5 text-[14px] text-white/80"
-                      >
-                        <div
-                          className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${plan.primary ? "bg-[var(--color-neon-primary)]/10 border-[var(--color-neon-primary)]/30" : "bg-white/5 border-white/10"}`}
-                        >
-                          <CheckCircle
-                            className={`w-[10px] h-[10px] ${plan.primary ? "text-[var(--color-neon-primary)]" : "text-white/60"}`}
-                            strokeWidth={3}
-                          />
-                        </div>
-                        <span className="leading-tight">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    href="/register"
-                    className={`w-full py-3.5 rounded-xl text-center text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 group ${plan.primary ? "text-[var(--color-neon-primary)] border border-[var(--color-neon-primary)] hover:bg-[var(--color-neon-primary)]/10 text-[var(--color-neon-primary)]" : "text-white border border-white/20 hover:bg-white/5 hover:border-white/40"}`}
-                  >
-                    {plan.primary ? "Start Free Trial" : "Get Started"}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ─── CTA ─── */}
         <div className="px-4 py-12 md:px-8 w-full max-w-[1400px] mx-auto">
           <section className="py-24 px-6 relative overflow-hidden bg-[#030604] rounded-[2.5rem] md:rounded-[3.5rem] border border-[var(--color-neon-border)] shadow-2xl">
@@ -1230,7 +1131,6 @@ export default function LandingContent({ session }: { session: any }) {
                 {[
                   ["Features", "#features"],
                   ["How It Works", "#how-it-works"],
-                  ["Pricing", "#pricing"],
                   ["Dashboard", "/dashboard"],
                   ["API Docs", "/docs"],
                 ].map(([label, href]) => (

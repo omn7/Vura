@@ -1,0 +1,23 @@
+name: Oops Security Scan
+
+on:
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  oops-security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Oops AI
+        run: npm install -g https://github.com/omn7/oops.ai.git
+
+      - name: Run Deep Project Scan
+        run: oops scan

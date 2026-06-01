@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { ShieldCheck, Search, CheckCircle2, XCircle, AlertTriangle } from "lucide-react"
+import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
 
 export default function VerifyPage() {
     const [id, setId] = useState("")
@@ -12,10 +13,19 @@ export default function VerifyPage() {
         if (!id.trim()) return
         setLoading(true)
         setResult(null)
-        const res = await fetch(`/api/verify/${id.trim().toUpperCase()}`)
-        const data = await res.json()
-        setResult({ status: res.status, data })
-        setLoading(false)
+        
+        const trimmedId = id.trim().toUpperCase();
+        
+        try {
+            const res = await fetch(`/api/verify/${trimmedId}`)
+            const data = await res.json()
+            setResult({ status: res.status, data })
+        } catch (error) {
+            console.error("Verification API call failed:", error);
+            setResult({ status: 500, data: { error: "Failed to connect to verification service." } });
+        } finally {
+            setLoading(false);
+        }
     }
 
     const StatusIcon = () => {
@@ -30,6 +40,12 @@ export default function VerifyPage() {
             : result?.status === 403 ? "border-amber-400/30 bg-amber-400/5 text-amber-400"
                 : result ? "border-red-400/30 bg-red-400/5 text-red-400"
                     : ""
+
+    // Helper to safely render strings from API response
+    const renderSafeString = (value: unknown) => {
+        if (typeof value !== 'string') return String(value); // Convert to string safely
+        return DOMPurify.sanitize(value, { USE_PROFILES: { html: false } }); // Sanitize, no HTML allowed
+    };
 
     return (
         <div className="space-y-8 max-w-xl">
@@ -76,11 +92,11 @@ export default function VerifyPage() {
                         </div>
                         {result.status === 200 && (
                             <div className="space-y-2 text-sm">
-                                {[
-                                    ["Recipient", result.data.recipient as string],
-                                    ["Course", result.data.course as string],
-                                    ["Issued On", result.data.issuedOn as string],
-                                    ["Certificate ID", result.data.certificateId as string],
+                                {[ 
+                                    ["Recipient", renderSafeString(result.data.recipient)],
+                                    ["Course", renderSafeString(result.data.course)],
+                                    ["Issued On", renderSafeString(result.data.issuedOn)],
+                                    ["Certificate ID", renderSafeString(result.data.certificateId)],
                                 ].map(([k, v]) => (
                                     <div key={k} className="flex justify-between gap-4 py-2 border-b border-white/10 last:border-0">
                                         <span className="opacity-60">{k}</span>
@@ -90,7 +106,7 @@ export default function VerifyPage() {
                             </div>
                         )}
                         {result.status !== 200 && (
-                            <p className="text-sm opacity-80">{result.data.error as string}</p>
+                            <p className="text-sm opacity-80">{renderSafeString(result.data.error)}</p>
                         )}
                     </div>
                 )}

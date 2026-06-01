@@ -33,8 +33,8 @@ const MAX_LIMIT = 100;
  * @returns Validated pagination parameters
  */
 export function parsePaginationParams(
-    page?: number | string,
-    limit?: number | string
+    page?: number | string | null,
+    limit?: number | string | null
 ): { page: number; limit: number } {
     let parsedPage = DEFAULT_PAGE;
     let parsedLimit = DEFAULT_LIMIT;

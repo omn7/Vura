@@ -23,7 +23,7 @@ model Certificate {
   status        String   @default("pending")
   failureReason String?
   sentAt        DateTime?
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
   revoked       Boolean  @default(false)
   createdAt     DateTime @default(now())
 

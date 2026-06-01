@@ -55,7 +55,7 @@ export function validateDatasetFile(file: File | null): FileValidationError | nu
   }
 
   const ext = "." + file.name.split(".").pop()?.toLowerCase();
-  if (!FILE_LIMITS.dataset.allowedExtensions.includes(ext)) {
+  if (!FILE_LIMITS.dataset.allowedExtensions.includes(ext as any)) {
     return {
       field: "dataset",
       message: `Dataset must be an Excel file (${FILE_LIMITS.dataset.allowedExtensions.join(", ")}).`,

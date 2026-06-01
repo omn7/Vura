@@ -1,4 +1,4 @@
-# 🚀 Welcoming All Vura Contributors!
+# 🚀 Welcoming All Vura Contributors !
 
 Thank you for your interest in contributing to **Vura**—our open-source SaaS platform designed for high-performance, bulk certificate generation and verification. 
 

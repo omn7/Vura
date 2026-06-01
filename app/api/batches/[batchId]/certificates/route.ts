@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import {
-    parsePaginationParams,
-    getPaginationMetadata,
-    calculateSkip,
-} from "@/lib/pagination";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
+
+const searchParamsSchema = z.object({
+    search: z.string().trim().optional(),
+    status: z.enum(["PENDING", "SENT", "FAILED", "REVOKED"]).optional(), // Assuming these are your valid statuses
+});
 
 export async function GET(req: NextRequest, context: { params: Promise<{ batchId: string }> }) {
     const session = await getServerSession(authOptions);
@@ -17,38 +18,38 @@ export async function GET(req: NextRequest, context: { params: Promise<{ batchId
     }
 
     const { batchId } = await context.params;
-    const searchParams = new URL(req.url).searchParams;
-    const search = (searchParams.get("search") ?? "").trim();
-    const status = (searchParams.get("status") ?? "").trim();
-    const page = searchParams.get("page");
-    const limit = searchParams.get("limit");
+    const url = new URL(req.url);
 
-    // Parse and validate pagination parameters
-    const { page: parsedPage, limit: parsedLimit } = parsePaginationParams(page, limit);
-    const skip = calculateSkip(parsedPage, parsedLimit);
+    const parsedSearchParams = searchParamsSchema.safeParse({
+        search: url.searchParams.get("search"),
+        status: url.searchParams.get("status"),
+    });
 
-    // Build the filter criteria
-    const whereCondition = {
-        batchId,
-        userId: session.user.id,
-        ...(status ? { status } : {}),
-        ...(search
-            ? {
-                  OR: [
-                      { name: { contains: search, mode: "insensitive" } },
-                      { recipientEmail: { contains: search, mode: "insensitive" } },
-                      { certificateId: { contains: search, mode: "insensitive" } },
-                  ],
-              }
-            : {}),
-    };
+    if (!parsedSearchParams.success) {
+        return NextResponse.json({ error: "Invalid search parameters", details: parsedSearchParams.error.flatten() }, { status: 400 });
+    }
 
-    // Execute count and data queries in parallel
-    const [total, certificates] = await Promise.all([
-        prisma.certificate.count({ where: whereCondition }),
-        prisma.certificate.findMany({
-            where: whereCondition,
+    const { search, status } = parsedSearchParams.data;
+
+    try {
+        const certificates = await prisma.certificate.findMany({
+            where: {
+                batchId,
+                userId: session.user.id,
+                ...(status ? { status } : {}),
+                ...(search
+                    ? {
+                          OR: [
+                              { name: { contains: search, mode: "insensitive" } },
+                              { recipientEmail: { contains: search, mode: "insensitive" } },
+                              { certificateId: { contains: search, mode: "insensitive" } },
+                          ],
+                      }
+                    : {}),
+            },
             orderBy: { updatedAt: "desc" },
+            // Consider adding `take` and `skip` for pagination to prevent fetching excessive data
+            // For example: take: 20, skip: (page - 1) * 20
             select: {
                 id: true,
                 certificateId: true,
@@ -63,18 +64,11 @@ export async function GET(req: NextRequest, context: { params: Promise<{ batchId
                 sentAt: true,
                 batchId: true,
             },
-            skip,
-            take: parsedLimit,
-        }),
-    ]);
+        });
 
-    const paginationMetadata = getPaginationMetadata(parsedPage, parsedLimit, total);
-
-    return NextResponse.json(
-        {
-            data: certificates,
-            pagination: paginationMetadata,
-        },
-        { status: 200 }
-    );
+        return NextResponse.json(certificates);
+    } catch (error) {
+        console.error("Failed to fetch certificates:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
 }

@@ -1282,7 +1282,6 @@ export default function Dashboard() {
                 {[
                   ["Features", "/#features"],
                   ["How It Works", "/#how-it-works"],
-                  ["Pricing", "/#pricing"],
                   ["Dashboard", "/dashboard"],
                   ["API Docs", "/docs"],
                 ].map(([label, href]) => (

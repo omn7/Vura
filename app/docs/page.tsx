@@ -9,12 +9,13 @@ import {
     Code2, Zap, Key, Plus, Search, ExternalLink, Menu, X
 } from "lucide-react"
 import { motion, type Variants, AnimatePresence } from "framer-motion"
+import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
 
 // ─────────────────────────────────────────────
 // Code snippets
 // ─────────────────────────────────────────────
 const verifySnippets = {
-    curl: `curl -X GET \\
+    curl: `curl -X GET \
   "https://vurakit.vercel.app/api/verify/CERT-A1B2C3D4"`,
     js: `const res = await fetch(
   "https://vurakit.vercel.app/api/verify/CERT-A1B2C3D4"
@@ -37,10 +38,10 @@ if res.status_code == 200:
 }
 
 const createSnippets = {
-    curl: `curl -X POST \\
-  "https://vurakit.vercel.app/api/certificates/create" \\
-  -H "Authorization: Bearer vura_your_api_key" \\
-  -H "Content-Type: application/json" \\
+    curl: `curl -X POST \
+  "https://vurakit.vercel.app/api/certificates/create" \
+  -H "Authorization: Bearer vura_your_api_key" \  # <<< REPLACE WITH YOUR REAL API KEY
+  -H "Content-Type: application/json" \
   -d '{
     "recipient":   "Aarav Patel",
     "course":      "Next.js Architecture",
@@ -52,7 +53,7 @@ const createSnippets = {
   {
     method: "POST",
     headers: {
-      "Authorization": "Bearer vura_your_api_key",
+      "Authorization": "Bearer vura_your_api_key", // <<< REPLACE WITH YOUR REAL API KEY
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -71,7 +72,7 @@ console.log("Certificate ID:", data.certificateId);`,
 res = requests.post(
     "https://vurakit.vercel.app/api/certificates/create",
     headers={
-        "Authorization": "Bearer vura_your_api_key",
+        "Authorization": "Bearer vura_your_api_key", # <<< REPLACE WITH YOUR REAL API KEY
         "Content-Type": "application/json",
     },
     json={
@@ -181,15 +182,31 @@ function LiveVerifier() {
     async function run() {
         if (!id.trim()) return
         setLoading(true); setResult(null)
-        const res = await fetch(`/api/verify/${id.trim().toUpperCase()}`)
-        const data = await res.json()
-        setResult({ status: res.status, data })
-        setLoading(false)
+        
+        const trimmedId = id.trim().toUpperCase();
+
+        try {
+            const res = await fetch(`/api/verify/${trimmedId}`)
+            const data = await res.json()
+            setResult({ status: res.status, data })
+        } catch (error) {
+            console.error("Live verifier API call failed:", error);
+            setResult({ status: 500, data: { error: "Failed to connect to verification service." } });
+        } finally {
+            setLoading(false)
+        }
     }
 
     const sc = result?.status === 200 ? "text-emerald-400 border-emerald-400/30 bg-emerald-400/5"
         : result?.status === 403 ? "text-amber-400 border-amber-400/30 bg-amber-400/5"
             : "text-red-400 border-red-400/30 bg-red-400/5"
+
+    const renderSafeJson = (data: unknown) => {
+        const stringifiedData = JSON.stringify(data, null, 2);
+        // Sanitize stringified JSON to prevent any script injection if data itself contains malicious strings
+        // Although JSON.stringify helps, an extra layer against strange chars is good practice in docs.
+        return DOMPurify.sanitize(stringifiedData, { USE_PROFILES: { html: false } });
+    };
 
     return (
         <div className="rounded-2xl border border-[var(--color-neon-border)] bg-[#0a0a0a] overflow-hidden">
@@ -217,7 +234,7 @@ function LiveVerifier() {
                             <span className="text-xs font-mono font-bold">HTTP {result.status}</span>
                             <CopyButton text={JSON.stringify(result.data, null, 2)} />
                         </div>
-                        <pre className="text-xs font-mono leading-relaxed overflow-x-auto">{JSON.stringify(result.data, null, 2)}</pre>
+                        <pre className="text-xs font-mono leading-relaxed overflow-x-auto">{renderSafeJson(result.data)}</pre>
                     </motion.div>
                 )}
             </div>
@@ -274,6 +291,10 @@ export default function DocsPage() {
                             Dashboard
                         </Link>
 
+                        <Link href="/sponsor" className="hover:text-white transition-colors">
+                            Sponsor
+                        </Link>
+
                         <span className="text-[var(--color-neon-primary)] font-semibold">
                             API Docs
                         </span>
@@ -318,6 +339,14 @@ export default function DocsPage() {
                                     className="hover:text-white py-1 transition-colors"
                                 >
                                     Dashboard
+                                </Link>
+
+                                <Link
+                                    href="/sponsor"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="hover:text-white py-1 transition-colors"
+                                >
+                                    Sponsor
                                 </Link>
 
                                 <Link
@@ -391,12 +420,12 @@ export default function DocsPage() {
                                     <div className="flex flex-col md:flex-row items-start md:items-center gap-3 rounded-2xl border border-[var(--color-neon-border)] bg-[#0d0d0d] px-6 py-4">
                                         <span className="text-xs font-bold px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">GET</span>
                                         <code className="flex-1 text-sm text-white font-mono break-all">
-                                            https://vurakit.vercel.app/api/verify/<span className="text-emerald-400">{"{id}"}</span>
+                                            https://vurakit.vercel.app/api/verify/<span className="text-emerald-400">{"{"}&#123;id&#125;{"}"}</span>
                                         </code>
                                         <CopyButton text="https://vurakit.vercel.app/api/verify/{id}" />
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        {[
+                                        {[ 
                                             { icon: <Key className="w-4 h-4" />, label: "Auth", value: "None — public" },
                                             { icon: <Terminal className="w-4 h-4" />, label: "Parameter", value: "{id} in URL" },
                                             { icon: <Globe className="w-4 h-4" />, label: "CORS", value: "All origins (*)" },
@@ -413,7 +442,7 @@ export default function DocsPage() {
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-semibold text-white">Response Codes</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {[
+                                        {[ 
                                             { code: "200", icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" />, label: "Verified", desc: "Certificate is authentic. Returns recipient, course, issuedOn.", color: "border-emerald-400/20 bg-emerald-400/5" },
                                             { code: "403", icon: <AlertTriangle className="w-4 h-4 text-amber-400" />, label: "Revoked", desc: "Certificate exists but has been revoked by the issuer.", color: "border-amber-400/20 bg-amber-400/5" },
                                             { code: "404", icon: <XCircle className="w-4 h-4 text-red-400" />, label: "Not Found", desc: "No certificate with this ID exists in the database.", color: "border-red-400/20 bg-red-400/5" },
@@ -495,7 +524,7 @@ export default function DocsPage() {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-[var(--color-neon-border)]">
-                                                        {[
+                                                        {[ 
                                                             ["recipient", "Full name on the certificate"],
                                                             ["course", "Course or credential name"],
                                                             ["issueDate", "Any date string"],
@@ -528,7 +557,7 @@ export default function DocsPage() {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-[var(--color-neon-border)]">
-                                                        {[
+                                                        {[ 
                                                             ["certificateId", "Unique ID — use this to verify later"],
                                                             ["pdfUrl", "Direct link to the generated PDF"],
                                                             ["verifyUrl", "Public verification page URL"],
@@ -573,7 +602,7 @@ export default function DocsPage() {
                             ) : (
                                 <div className="rounded-2xl border border-[var(--color-neon-border)] bg-[#0a0a0a] p-6 space-y-4">
                                     <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Zap className="w-4 h-4 text-purple-400" /> What Happens Next</h3>
-                                    {[
+                                    {[ 
                                         { n: "1", t: "Template fetched", d: "Vura downloads the PDF template from your templateUrl." },
                                         { n: "2", t: "Certificate generated", d: "Name, course, date and a QR code are stamped onto the PDF." },
                                         { n: "3", t: "Uploaded to S3", d: "The PDF is stored and a permanent URL is assigned." },
@@ -625,7 +654,7 @@ export default function DocsPage() {
                         <p className="text-[var(--color-neon-muted)]">Real use-cases powered by the two API endpoints</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        {[
+                        {[ 
                             {
                                 tag: "Verify API", tagColor: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
                                 title: "Public Verification Widget",

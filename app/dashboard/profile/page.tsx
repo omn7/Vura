@@ -2,10 +2,28 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { User, Mail, Calendar } from "lucide-react";
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { Session } from "next-auth";
+
+// Extend the Session type to include the user.id
+interface CustomSession {
+    user?: {
+        id?: string | null;
+        name?: string | null;
+        email?: string | null;
+        image?: string | null;
+    };
+}
 
 export default async function ProfilePage() {
-    const session = await getServerSession(authOptions);
-    const user = session!.user;
+    const session = (await getServerSession(authOptions)) as CustomSession;
+
+    // Explicitly check for session and user before proceeding
+    if (!session || !session.user) {
+        redirect("/login"); // Redirect to login if session or user is missing
+    }
+
+    const user = session.user;
 
     return (
         <div className="space-y-8 max-w-xl">
@@ -31,7 +49,7 @@ export default async function ProfilePage() {
                 </div>
 
                 <div className="divide-y divide-[var(--color-neon-border)]">
-                    {[
+                    {[ 
                         { icon: <User className="w-4 h-4" />, label: "Name", value: user.name ?? "—" },
                         { icon: <Mail className="w-4 h-4" />, label: "Email", value: user.email ?? "—" },
                         { icon: <Calendar className="w-4 h-4" />, label: "Auth Method", value: user.image ? "Google OAuth" : "Email & Password" },
