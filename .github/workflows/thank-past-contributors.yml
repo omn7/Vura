@@ -1,9 +1,12 @@
 name: Thank Past Contributors
 
 on:
+  push:
+    branches: ["feature/contributor-certificates-and-sponsors"]
   workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
   schedule:
     - cron: '0 0 1 * *' # Automatically runs on the 1st of every month
+
 
 permissions:
   contents: read
