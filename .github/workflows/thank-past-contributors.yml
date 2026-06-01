@@ -1,23 +1,14 @@
 name: Thank Past Contributors
 
 on:
-  push:
-    branches: ["feature/contributor-certificates-and-sponsors"]
-  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
-  schedule:
-    - cron: '0 0 1 * *' # Automatically runs on the 1st of every month
-
+  workflow_dispatch:
 
 permissions:
-  contents: read
   issues: write
-  pull-requests: write
 
 jobs:
   thank-past-contributors:
-    name: Thank Merged Contributors
     runs-on: ubuntu-latest
-    
     steps:
       - name: Thank all past contributors
         uses: actions/github-script@v7
@@ -25,58 +16,46 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            
+
+            // Fetch all closed PRs (paginated)
             const prs = await github.paginate(github.rest.pulls.list, {
-              owner: owner,
-              repo: repo,
+              owner,
+              repo,
               state: 'closed',
               sort: 'updated',
               direction: 'desc',
               per_page: 100
             });
-            
-            console.log(`Total closed PRs fetched: ${prs.length}`);
-            if (prs.length > 0) {
-              console.log("First 10 closed PRs sample:");
-              prs.slice(0, 10).forEach(pr => {
-                console.log(`- PR #${pr.number} by @${pr.user.login} | Merged At: ${pr.merged_at} | State: ${pr.state}`);
-              });
-            }
-            
-            const mergedPRs = prs.filter(pr => pr.merged_at && pr.user.login !== 'omn7');
-            
+
+            // Filter for merged PRs not by omn7
+            const mergedPRs = prs.filter(pr => pr.merged_at && pr.user && pr.user.login !== 'omn7');
+
             console.log(`Found ${mergedPRs.length} merged PRs to thank contributors for`);
 
-            for (const pr of mergedPRs) {
-              const comments = await github.rest.issues.listComments({
-                owner: owner,
-                repo: repo,
-                issue_number: pr.number,
-              });
-              
-              const alreadyCommented = comments.data.some(c => 
-                c.body.includes('Thank you so much for contributing to Vura')
-              );
-              
-              if (!alreadyCommented) {
-                try {
-                  const mergeCommitSha = pr.merge_commit_sha ? pr.merge_commit_sha.slice(0, 7) : '';
-                  const mergeCommitUrl = pr.merge_commit_sha ? `https://github.com/${owner}/${repo}/commit/${pr.merge_commit_sha}` : '';
-                  
-                  const commentBody = `Thank you so much for contributing to Vura! 🙏 Your efforts are greatly appreciated and help make this project better.
-
-### 📊 Merge Details:
-- **Pull Request:** #${pr.number}
-- **Merge Commit:** [${mergeCommitSha}](${mergeCommitUrl})
+            const commentBody = `Thank you so much for contributing to Vura! 🙏 Your efforts are greatly appreciated and help make this project better.
 
 If you'd like to download your contribution certificate and view your profile, please visit:
 https://vurakit.vercel.app/contributor
 
 We're grateful for your support!`;
 
+            for (const pr of mergedPRs) {
+              // Check for an existing thank-you comment to avoid duplicates
+              const { data: comments } = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pr.number,
+              });
+
+              const alreadyCommented = comments.some(c =>
+                c.body && c.body.includes('Thank you so much for contributing to Vura')
+              );
+
+              if (!alreadyCommented) {
+                try {
                   await github.rest.issues.createComment({
-                    owner: owner,
-                    repo: repo,
+                    owner,
+                    repo,
                     issue_number: pr.number,
                     body: commentBody
                   });
@@ -88,6 +67,5 @@ We're grateful for your support!`;
                 console.log(`⊘ PR #${pr.number} already has thank you comment`);
               }
             }
-            
-            console.log('Completed thanking all past contributors!');
 
+            console.log('Completed thanking all past contributors!');
