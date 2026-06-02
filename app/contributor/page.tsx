@@ -167,66 +167,62 @@ export default function ContributorPage() {
   const handleGenerateCertificate = async (login: string, commitHash: string, mergeDate: string, certificateId: string) => {
     setGeneratingId(login);
     try {
-      const response = await fetch("/contributor-certs.pdf");
-      if (!response.ok) {
-        throw new Error("Failed to fetch certificate template PDF.");
-      }
-      const templateBuffer = await response.arrayBuffer();
-
-      const pdfDoc = await PDFDocument.load(templateBuffer);
-      const page = pdfDoc.getPages()[0];
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage([842, 595]); // A4 landscape
 
       const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-      page.drawRectangle({
-        x: 75,
-        y: 310,
-        width: 600,
-        height: 50,
-        color: rgb(0.176, 0.196, 0.259), // Seamless background color!
-      });
+      const W = 842, H = 595;
+      const bg = rgb(0.012, 0.012, 0.024);
+      const teal = rgb(0, 0.9, 0.6);
+      const muted = rgb(0.53, 0.53, 0.53);
 
-      page.drawText(`@${login}`, {
-        x: 78.24,
-        y: 318.00,
-        size: 36,
-        font: helveticaBold,
-        color: rgb(0.082, 0.69, 0.608),
-      });
+      // Dark background
+      page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: bg });
 
-      page.drawRectangle({
-        x: 75,
-        y: 42,
-        width: 320,
-        height: 20,
-        color: rgb(0.176, 0.196, 0.259), // Seamless background color!
-      });
+      // Decorative borders
+      page.drawRectangle({ x: 25, y: 25, width: W - 50, height: H - 50, borderColor: teal, borderWidth: 1.5, color: bg });
+      page.drawRectangle({ x: 32, y: 32, width: W - 64, height: H - 64, borderColor: teal, borderWidth: 0.5, color: bg });
 
-      page.drawText(`Certificate ID: ${certificateId}`, {
-        x: 78.24,
-        y: 48.67,
-        size: 11,
-        font: helveticaBold,
-        color: rgb(0.153, 0.647, 0.58),
-      });
+      // Top accent line
+      page.drawRectangle({ x: 70, y: 488, width: W - 140, height: 2, color: teal });
 
-      page.drawRectangle({
-        x: 435,
-        y: 42,
-        width: 320,
-        height: 20,
-        color: rgb(0.176, 0.196, 0.259), // Seamless background color!
-      });
+      // Title
+      page.drawText("CERTIFICATE OF CONTRIBUTION", { x: 70, y: 452, size: 26, font: helveticaBold, color: teal });
 
-      const dateText = `${mergeDate}  (Commit: ${commitHash})`;
-      page.drawText(dateText, {
-        x: 442.03,
-        y: 48.67, // Perfectly aligned horizontally with Certificate ID
-        size: 11,
-        font: helvetica,
-        color: rgb(1, 1, 1),
-      });
+      // Subtitle
+      page.drawText("PROUDLY PRESENTED TO", { x: 70, y: 416, size: 11, font: helvetica, color: muted });
+
+      // GitHub username - centered
+      const nameText = `@${login}`;
+      const nameSize = 42;
+      const nameWidth = helveticaBold.widthOfTextAtSize(nameText, nameSize);
+      page.drawText(nameText, { x: (W - nameWidth) / 2, y: 360, size: nameSize, font: helveticaBold, color: teal });
+
+      // Contribution description
+      const line1 = "for contributing to the Vura project";
+      const line1W = helvetica.widthOfTextAtSize(line1, 14);
+      page.drawText(line1, { x: (W - line1W) / 2, y: 300, size: 14, font: helvetica, color: muted });
+
+      const line2 = `Commit: ${commitHash}  |  Merged: ${mergeDate}`;
+      const line2W = helvetica.widthOfTextAtSize(line2, 12);
+      page.drawText(line2, { x: (W - line2W) / 2, y: 275, size: 12, font: helvetica, color: rgb(1, 1, 1) });
+
+      // Bottom accent line
+      page.drawRectangle({ x: 70, y: 140, width: W - 140, height: 1, color: teal });
+
+      // Certificate ID
+      page.drawText(`Certificate ID: ${certificateId}`, { x: 70, y: 115, size: 11, font: helveticaBold, color: teal });
+
+      // Verification link
+      page.drawText("Verify at vura.vercel.app/verify", { x: 70, y: 98, size: 9, font: helvetica, color: muted });
+
+      // Generation date
+      const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+      const dateText = `Generated: ${today}`;
+      const dateW = helvetica.widthOfTextAtSize(dateText, 9);
+      page.drawText(dateText, { x: W - 70 - dateW, y: 98, size: 9, font: helvetica, color: muted });
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes as any], { type: "application/pdf" });
