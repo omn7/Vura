@@ -22,7 +22,7 @@ export async function POST(req: Request) {
             req.headers
         );
 
-        const blockStatus = isBlocked(rateLimitKey);
+        const blockStatus = await isBlocked(rateLimitKey);
 
         if (blockStatus.blocked) {
             return NextResponse.json(
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         const parsed = registerSchema.safeParse(body);
 
         if (!parsed.success) {
-            recordFailedAttempt(rateLimitKey);
+            await recordFailedAttempt(rateLimitKey);
             const error = parsed.error.issues[0].message;
             return NextResponse.json({ error }, { status: 400 });
         }

@@ -52,8 +52,8 @@ export async function GET(req: NextRequest) {
                 : {}),
         };
 
-        // Execute count and data queries in parallel
-        const [total, certificates] = await Promise.all([
+        // Execute count, data, and stats queries in parallel
+        const [total, certificates, statsRaw] = await Promise.all([
             prisma.certificate.count({ where: whereCondition }),
             prisma.certificate.findMany({
                 where: whereCondition,
@@ -75,7 +75,36 @@ export async function GET(req: NextRequest) {
                 skip,
                 take: parsedLimit,
             }),
+            prisma.certificate.groupBy({
+                by: ["status"],
+                where: {
+                    userId: session.user.id,
+                },
+                _count: {
+                    status: true,
+                },
+            }),
         ]);
+
+        const stats = {
+            total: 0,
+            delivered: 0,
+            pending: 0,
+            failed: 0,
+        };
+
+        for (const s of statsRaw) {
+            const count = s._count.status;
+            stats.total += count;
+            const normStatus = s.status.toLowerCase();
+            if (normStatus === "sent" || normStatus === "generated") {
+                stats.delivered += count;
+            } else if (normStatus === "pending") {
+                stats.pending += count;
+            } else if (normStatus === "failed") {
+                stats.failed += count;
+            }
+        }
 
         const paginationMetadata = getPaginationMetadata(parsedPage, parsedLimit, total);
 
@@ -83,6 +112,7 @@ export async function GET(req: NextRequest) {
             {
                 data: certificates,
                 pagination: paginationMetadata,
+                stats,
             },
             { status: 200 }
         );

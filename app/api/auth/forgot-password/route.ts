@@ -21,7 +21,7 @@ export async function POST(req: Request) {
                 : "anonymous",
             req.headers
         );
-        const blockStatus = isBlocked(rateLimitKey);
+        const blockStatus = await isBlocked(rateLimitKey);
 
         if (blockStatus.blocked) {
             return NextResponse.json(
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         const parsed = forgotPasswordSchema.safeParse(body);
 
         if (!parsed.success) {
-            recordFailedAttempt(rateLimitKey);
+            await recordFailedAttempt(rateLimitKey);
             const error = parsed.error.issues[0].message;
             return NextResponse.json({ error }, { status: 400 });
         }
@@ -63,14 +63,6 @@ export async function POST(req: Request) {
         const resetToken = crypto.randomBytes(32).toString("hex");
         const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
-        await prisma.user.update({
-            where: { email },
-            data: {
-                resetPasswordToken: resetToken,
-                resetPasswordExpires: resetTokenExpiry,
-            },
-        });
-
         // We use ethereal or mock if env vars are missing
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || "smtp.ethereal.email",
@@ -83,6 +75,7 @@ export async function POST(req: Request) {
 
         const resetUrl = `${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/reset-password/${resetToken}`;
 
+        let mailSent = false;
         try {
             await transporter.sendMail({
                 from: process.env.SMTP_FROM || '"Vura" <noreply@vura.com>',
@@ -96,11 +89,25 @@ export async function POST(req: Request) {
                     <p>This link is valid for 1 hour.</p>
                 `,
             });
+            mailSent = true;
         } catch (mailError: any) {
-            // It might fail if no valid SMTP is configured. We'll still allow the token to be set, 
-            // but we can log the error or print the url for dev purposes.
             console.error("Failed to send email. If you are in dev, here is the reset URL:", resetUrl);
             console.error(mailError);
+        }
+
+        if (mailSent) {
+            await prisma.user.update({
+                where: { email },
+                data: {
+                    resetPasswordToken: resetToken,
+                    resetPasswordExpires: resetTokenExpiry,
+                },
+            });
+        } else {
+            return NextResponse.json(
+                { message: "Failed to send password reset email. Please try again later." },
+                { status: 500 }
+            );
         }
 
         return NextResponse.json(

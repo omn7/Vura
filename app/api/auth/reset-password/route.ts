@@ -25,7 +25,7 @@ export async function POST(req: Request) {
             req.headers
         );
 
-        const blockStatus = isBlocked(rateLimitKey);
+        const blockStatus = await isBlocked(rateLimitKey);
 
         if (blockStatus.blocked) {
             return NextResponse.json(
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         const parsed = resetPasswordSchema.safeParse(body);
 
         if (!parsed.success) {
-            recordFailedAttempt(rateLimitKey);
+            await recordFailedAttempt(rateLimitKey);
 
             const error = parsed.error.issues[0].message;
 
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
         });
 
         if (!user) {
-            recordFailedAttempt(rateLimitKey);
+            await recordFailedAttempt(rateLimitKey);
 
             return NextResponse.json(
                 {
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
             },
         });
 
-        clearFailedAttempts(rateLimitKey);
+        await clearFailedAttempts(rateLimitKey);
 
         return NextResponse.json(
             { message: "Password reset successfully" },

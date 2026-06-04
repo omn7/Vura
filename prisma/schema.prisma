@@ -121,3 +121,10 @@ model Template {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model RateLimit {
+  key          String    @id
+  count        Int
+  firstAttempt DateTime  @default(now())
+  blockedUntil DateTime?
+}

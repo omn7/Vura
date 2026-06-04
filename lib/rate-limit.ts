@@ -1,15 +1,9 @@
-type AttemptRecord = {
-    count: number;
-    firstAttempt: number;
-    blockedUntil?: number;
-};
+import prisma from "./prisma";
 
 type HeaderBag =
     | Headers
     | Record<string, string | string[] | undefined>
     | undefined;
-
-const loginAttempts = new Map<string, AttemptRecord>();
 
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 10 * 60 * 1000;
@@ -63,8 +57,10 @@ export function getRateLimitKey(
     return `${scope}:${getClientIp(headers)}:${normalizedIdentifier}`;
 }
 
-export function isBlocked(key: string) {
-    const record = loginAttempts.get(key);
+export async function isBlocked(key: string) {
+    const record = await prisma.rateLimit.findUnique({
+        where: { key },
+    });
 
     if (!record) {
         return {
@@ -72,19 +68,25 @@ export function isBlocked(key: string) {
         };
     }
 
-    const now = Date.now();
+    const now = new Date();
 
     if (record.blockedUntil && record.blockedUntil > now) {
         return {
             blocked: true,
             retryAfter: Math.ceil(
-                (record.blockedUntil - now) / 1000
+                (record.blockedUntil.getTime() - now.getTime()) / 1000
             ),
         };
     }
 
     if (record.blockedUntil && record.blockedUntil <= now) {
-        loginAttempts.delete(key);
+        try {
+            await prisma.rateLimit.delete({
+                where: { key },
+            });
+        } catch {
+            // Ignore concurrent deletes
+        }
 
         return {
             blocked: false,
@@ -96,41 +98,61 @@ export function isBlocked(key: string) {
     };
 }
 
-export function recordFailedAttempt(key: string) {
-    const now = Date.now();
+export async function recordFailedAttempt(key: string) {
+    const now = new Date();
 
-    const existingRecord = loginAttempts.get(key);
+    const existingRecord = await prisma.rateLimit.findUnique({
+        where: { key },
+    });
 
     if (!existingRecord) {
-        loginAttempts.set(key, {
-            count: 1,
-            firstAttempt: now,
+        await prisma.rateLimit.create({
+            data: {
+                key,
+                count: 1,
+                firstAttempt: now,
+            },
         });
 
         return;
     }
 
-    if (now - existingRecord.firstAttempt > WINDOW_MS) {
-        loginAttempts.set(key, {
-            count: 1,
-            firstAttempt: now,
+    if (now.getTime() - existingRecord.firstAttempt.getTime() > WINDOW_MS) {
+        await prisma.rateLimit.update({
+            where: { key },
+            data: {
+                count: 1,
+                firstAttempt: now,
+                blockedUntil: null,
+            },
         });
 
         return;
     }
 
-    existingRecord.count += 1;
-
-    if (existingRecord.count >= MAX_ATTEMPTS) {
-        existingRecord.blockedUntil =
-            now + BLOCK_DURATION_MS;
+    const newCount = existingRecord.count + 1;
+    let blockedUntil: Date | null = null;
+    if (newCount >= MAX_ATTEMPTS) {
+        blockedUntil = new Date(now.getTime() + BLOCK_DURATION_MS);
     }
 
-    loginAttempts.set(key, existingRecord);
+    await prisma.rateLimit.update({
+        where: { key },
+        data: {
+            count: newCount,
+            blockedUntil,
+        },
+    });
 }
 
-export function clearFailedAttempts(key: string) {
-    loginAttempts.delete(key);
+export async function clearFailedAttempts(key: string) {
+    try {
+        await prisma.rateLimit.delete({
+            where: { key },
+        });
+    } catch {
+        // Ignore if already deleted
+    }
 }
 
 export function getRetryAfterHeaders(retryAfter?: number) {
