@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     }
 
     if (certificate.status !== "failed") {
-        return NextResponse.json({ error: "Not retryable" }, { status: 400 });
+        return NextResponse.json({ error: "Not retryable" }, { status: 409 });
     }
 
     const templateResponse = await fetch(certificate.templateUrl);
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             where: { certificateId: certificate.certificateId },
             data: { status: "failed", failureReason },
         });
-        return NextResponse.json({ error: failureReason }, { status: 400 });
+        return NextResponse.json({ error: failureReason }, { status: 502 });
     }
 
     const templateBuffer = await templateResponse.arrayBuffer();

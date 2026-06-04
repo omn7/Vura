@@ -89,7 +89,7 @@ export async function POST(req: Request) {
                     message:
                         "Invalid or expired password reset token",
                 },
-                { status: 400 }
+                { status: 422 }
             );
         }
 
