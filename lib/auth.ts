@@ -50,9 +50,9 @@ export const authOptions: NextAuthOptions = {
 
             authorize: async (credentials: Record<string, string> | undefined, req: any) => {
                 // Always return null or generic error to prevent user enumeration
-                const failAuth = () => {
+                const failAuth = async () => {
                     // recordFailedAttempt is called before returning null to ensure rate limiting works
-                    recordFailedAttempt(rateLimitKey); 
+                    await recordFailedAttempt(rateLimitKey); 
                     return null; // Return null for generic NextAuth error message
                 }
 
@@ -75,7 +75,7 @@ export const authOptions: NextAuthOptions = {
                 // Combine IP with email for a more specific rate limit key
                 const rateLimitKey = `${ip}:${credentials.email.toLowerCase()}`;
 
-                const blockStatus = isBlocked(rateLimitKey);
+                const blockStatus = await isBlocked(rateLimitKey);
                 if (blockStatus.blocked) {
                     // Optionally, log this attempt for monitoring
                     console.warn(`Rate limit blocked for ${credentials.email} (IP: ${ip})`);
@@ -95,16 +95,16 @@ export const authOptions: NextAuthOptions = {
 
                 const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
                 if (!user || !user.password) {
-                    return failAuth(); // User not found or no password set (e.g., OAuth user without credential password)
+                    return await failAuth(); // User not found or no password set (e.g., OAuth user without credential password)
                 }
 
                 const isPasswordValid = await bcrypt.compare(parsed.data.password, user.password);
                 if (!isPasswordValid) {
-                    return failAuth(); // Incorrect password
+                    return await failAuth(); // Incorrect password
                 }
 
                 // If login is successful, clear any failed attempt records for this key
-                clearFailedAttempts(rateLimitKey);
+                await clearFailedAttempts(rateLimitKey);
 
                 // Return the user object, ensuring it has an 'id' property
                 return { id: user.id, name: user.name, email: user.email }; // Explicitly return only necessary user data

@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
         "anonymous";
     const rateLimitKey = `${VERIFY_RATE_KEY_PREFIX}${ip}`;
 
-    const blockStatus = isBlocked(rateLimitKey);
+    const blockStatus = await isBlocked(rateLimitKey);
     if (blockStatus.blocked) {
         return NextResponse.json(
             { error: "Too many verification attempts. Please try again later." },
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
 
         // 404 â€” certificate not found; count as a failed attempt to throttle scanners
         if (!certificate) {
-            recordFailedAttempt(rateLimitKey);
+            await recordFailedAttempt(rateLimitKey);
             return NextResponse.json(
                 { error: "Certificate not found." },
                 { status: 404, headers: corsHeaders() },

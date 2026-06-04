@@ -133,7 +133,8 @@ export async function generateCertificate(
 
     // Render Issue Date
     if (settings.issueDate?.enabled !== false) { // Default is enabled
-        const textToDraw = settings.issueDate ? validatedData.issueDate : `Date: ${validatedData.issueDate}`; // Use validated data
+        const hasPrefix = validatedData.issueDate.toLowerCase().startsWith("date:");
+        const textToDraw = hasPrefix ? validatedData.issueDate : `Date: ${validatedData.issueDate}`;
         const fontSize = settings.issueDate?.size ?? 14;
         const fontToUse = getFont(settings.issueDate?.fontStyle ?? 'normal');
         const textWidth = fontToUse.widthOfTextAtSize(textToDraw, fontSize);

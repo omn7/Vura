@@ -34,10 +34,11 @@ export async function sendCertificateEmail({ recipientEmail, recipientName, cert
     // Assuming verifyUrl comes from a trusted source (appBaseUrl + certificateId), it's relatively safe.
     const safeVerifyUrl = new URL(verifyUrl, appBaseUrl).toString(); // Ensure it's an absolute URL and guards against malformed paths
 
+    const smtpPort = Number(process.env.SMTP_PORT) || 587;
     const transporter = nodemailer.createTransport({
         host: smtpHost,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465, // Use 'true' if port is 465, 'false' otherwise
+        port: smtpPort,
+        secure: smtpPort === 465, // Use 'true' if port is 465, 'false' otherwise
         auth: {
             user: smtpUser,
             pass: smtpPass,

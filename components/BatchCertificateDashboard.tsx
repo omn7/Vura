@@ -72,6 +72,13 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
     const [refreshTick, setRefreshTick] = useState(0);
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+    const [totals, setTotals] = useState({
+        total: 0,
+        pending: 0,
+        generated: 0,
+        sent: 0,
+        failed: 0,
+    });
 
     const deferredSearch = useDeferredValue(search);
 
@@ -104,6 +111,9 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
                 const json = await response.json();
                 setRecords(Array.isArray(json.data) ? json.data : []);
                 setPagination(json.pagination ?? null);
+                if (json.stats) {
+                    setTotals(json.stats);
+                }
             } catch (loadError) {
                 if (controller.signal.aborted) return;
                 setError(loadError instanceof Error ? loadError.message : "Failed to load batch certificates.");
@@ -120,22 +130,7 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
         return () => controller.abort();
     }, [batchId, status, deferredSearch, refreshTick, page]);
 
-    const totals = useMemo(() => {
-        return records.reduce(
-            (accumulator, record) => {
-                accumulator.total += 1;
-                accumulator[record.status as keyof typeof accumulator] = (accumulator[record.status as keyof typeof accumulator] ?? 0) + 1;
-                return accumulator;
-            },
-            {
-                total: 0,
-                pending: 0,
-                generated: 0,
-                sent: 0,
-                failed: 0,
-            }
-        );
-    }, [records]);
+
 
     async function handleCopyLink(certificateId: string) {
         const url = `${window.location.origin}/verify/${certificateId}`;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useDeferredValue } from "react";
 import {
     AlertCircle,
     CheckCircle2,
@@ -82,6 +82,15 @@ export default function DeliveriesDashboard() {
     const [retryingId, setRetryingId] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [refreshTick, setRefreshTick] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState<any | null>(null);
+    const [stats, setStats] = useState({ total: 0, delivered: 0, pending: 0, failed: 0 });
+
+    const deferredSearch = useDeferredValue(searchQuery);
+
+    useEffect(() => {
+        setPage(1);
+    }, [statusFilter, deferredSearch]);
 
     // Fetch records on mount or refresh
     useEffect(() => {
@@ -91,14 +100,23 @@ export default function DeliveriesDashboard() {
             setLoading(true);
             setError(null);
             try {
-                const response = await fetch("/api/certificates");
+                const params = new URLSearchParams();
+                if (statusFilter) params.set("status", statusFilter);
+                if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
+                params.set("page", String(page));
+
+                const response = await fetch(`/api/certificates?${params.toString()}`);
                 if (!response.ok) {
                     const payload = await response.json().catch(() => null);
                     throw new Error(payload?.error || "Failed to load delivery records.");
                 }
-                const data = await response.json();
+                const json = await response.json();
                 if (active) {
-                    setRecords(Array.isArray(data) ? data : []);
+                    setRecords(Array.isArray(json.data) ? json.data : []);
+                    setPagination(json.pagination ?? null);
+                    if (json.stats) {
+                        setStats(json.stats);
+                    }
                 }
             } catch (err) {
                 if (active) {
@@ -116,50 +134,9 @@ export default function DeliveriesDashboard() {
         return () => {
             active = false;
         };
-    }, [refreshTick]);
+    }, [refreshTick, statusFilter, deferredSearch, page]);
 
-    // Calculate global stats from all records
-    const stats = useMemo(() => {
-        return records.reduce(
-            (acc, record) => {
-                acc.total += 1;
-                if (record.status === "sent" || record.status === "generated") {
-                    acc.delivered += 1;
-                } else if (record.status === "pending") {
-                    acc.pending += 1;
-                } else if (record.status === "failed") {
-                    acc.failed += 1;
-                }
-                return acc;
-            },
-            { total: 0, delivered: 0, pending: 0, failed: 0 }
-        );
-    }, [records]);
-
-    // Filter and search records client-side
-    const filteredRecords = useMemo(() => {
-        return records.filter((record) => {
-            // Status match
-            if (statusFilter) {
-                const info = getStatusInfo(record.status);
-                if (info.label.toLowerCase() !== statusFilter.toLowerCase()) {
-                    return false;
-                }
-            }
-
-            // Search match
-            if (searchQuery.trim()) {
-                const q = searchQuery.toLowerCase();
-                const nameMatch = record.name.toLowerCase().includes(q);
-                const emailMatch = record.recipientEmail?.toLowerCase().includes(q) ?? false;
-                const idMatch = record.certificateId.toLowerCase().includes(q);
-                const courseMatch = record.course.toLowerCase().includes(q);
-                return nameMatch || emailMatch || idMatch || courseMatch;
-            }
-
-            return true;
-        });
-    }, [records, statusFilter, searchQuery]);
+    const filteredRecords = records;
 
     // Copy link helper
     async function handleCopyLink(certificateId: string) {
@@ -460,6 +437,31 @@ export default function DeliveriesDashboard() {
                                 );
                             })}
                         </div>
+                        {pagination && pagination.totalPages > 1 ? (
+                            <div className="flex items-center justify-between text-sm text-[var(--color-neon-muted)] p-4 border-t border-[var(--color-neon-border)]">
+                                <span>
+                                    Page {pagination.page} of {pagination.totalPages} &mdash; {pagination.total} total
+                                </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        disabled={!pagination.hasPreviousPage}
+                                        onClick={() => setPage((p) => p - 1)}
+                                        className="rounded-lg border border-[var(--color-neon-border)] px-3 py-1.5 text-xs transition-colors hover:border-[var(--color-neon-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={!pagination.hasNextPage}
+                                        onClick={() => setPage((p) => p + 1)}
+                                        className="rounded-lg border border-[var(--color-neon-border)] px-3 py-1.5 text-xs transition-colors hover:border-[var(--color-neon-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        ) : null}
                     </>
                 )}
             </div>
