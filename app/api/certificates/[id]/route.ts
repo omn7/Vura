@@ -33,7 +33,7 @@ export async function DELETE(
 
         await prisma.certificate.delete({ where: { certificateId: id } });
 
-        return NextResponse.json({ success: true });
+        return new NextResponse(null, { status: 204 });
     } catch (error) {
         console.error(`Failed to delete certificate ${id}:`, error);
         // More granular error handling could be added, e.g., if ID is malformed or DB connection issues

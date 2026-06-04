@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
             });
             return NextResponse.json(
                 { error: `Failed to fetch templateUrl (HTTP ${templateRes.status}). Make sure the URL is publicly accessible.` },
-                { status: 400, headers: corsHeaders }
+                { status: 502, headers: corsHeaders }
             );
         }
         templateBuffer = await templateRes.arrayBuffer();
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
         });
         return NextResponse.json(
             { error: message },
-            { status: 400, headers: corsHeaders }
+            { status: 502, headers: corsHeaders }
         );
     }
 
