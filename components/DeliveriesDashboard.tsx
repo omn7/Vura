@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useDeferredValue } from "react";
 import {
     AlertCircle,
     CheckCircle2,
@@ -73,6 +73,15 @@ function formatDate(value: string | null) {
     });
 }
 
+type PaginationMeta = {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+};
+
 export default function DeliveriesDashboard() {
     const [records, setRecords] = useState<CertificateRecord[]>([]);
     const [loading, setLoading] = useState(true);
@@ -82,43 +91,50 @@ export default function DeliveriesDashboard() {
     const [retryingId, setRetryingId] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [refreshTick, setRefreshTick] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState<PaginationMeta | null>(null);
 
-    // Fetch records on mount or refresh
+    const deferredSearch = useDeferredValue(searchQuery);
+
     useEffect(() => {
-        let active = true;
+        setPage(1);
+    }, [statusFilter, deferredSearch]);
+
+    useEffect(() => {
+        const controller = new AbortController();
 
         async function loadCertificates() {
             setLoading(true);
             setError(null);
             try {
-                const response = await fetch("/api/certificates");
+                const params = new URLSearchParams();
+                if (statusFilter) params.set("status", statusFilter);
+                if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
+                params.set("page", String(page));
+
+                const response = await fetch(`/api/certificates?${params.toString()}`, {
+                    signal: controller.signal,
+                });
                 if (!response.ok) {
                     const payload = await response.json().catch(() => null);
                     throw new Error(payload?.error || "Failed to load delivery records.");
                 }
-                const data = await response.json();
-                if (active) {
-                    setRecords(Array.isArray(data) ? data : []);
-                }
+                const json = await response.json();
+                setRecords(Array.isArray(json.data) ? json.data : []);
+                setPagination(json.pagination ?? null);
             } catch (err) {
-                if (active) {
-                    setError(err instanceof Error ? err.message : "Failed to load delivery records.");
-                }
+                if (controller.signal.aborted) return;
+                setError(err instanceof Error ? err.message : "Failed to load delivery records.");
+                setRecords([]);
             } finally {
-                if (active) {
-                    setLoading(false);
-                }
+                if (!controller.signal.aborted) setLoading(false);
             }
         }
 
         loadCertificates();
+        return () => controller.abort();
+    }, [statusFilter, deferredSearch, refreshTick, page]);
 
-        return () => {
-            active = false;
-        };
-    }, [refreshTick]);
-
-    // Calculate global stats from all records
     const stats = useMemo(() => {
         return records.reduce(
             (acc, record) => {
@@ -136,30 +152,7 @@ export default function DeliveriesDashboard() {
         );
     }, [records]);
 
-    // Filter and search records client-side
-    const filteredRecords = useMemo(() => {
-        return records.filter((record) => {
-            // Status match
-            if (statusFilter) {
-                const info = getStatusInfo(record.status);
-                if (info.label.toLowerCase() !== statusFilter.toLowerCase()) {
-                    return false;
-                }
-            }
-
-            // Search match
-            if (searchQuery.trim()) {
-                const q = searchQuery.toLowerCase();
-                const nameMatch = record.name.toLowerCase().includes(q);
-                const emailMatch = record.recipientEmail?.toLowerCase().includes(q) ?? false;
-                const idMatch = record.certificateId.toLowerCase().includes(q);
-                const courseMatch = record.course.toLowerCase().includes(q);
-                return nameMatch || emailMatch || idMatch || courseMatch;
-            }
-
-            return true;
-        });
-    }, [records, statusFilter, searchQuery]);
+    const filteredRecords = records;
 
     // Copy link helper
     async function handleCopyLink(certificateId: string) {
@@ -194,8 +187,8 @@ export default function DeliveriesDashboard() {
         }
     }
 
-    const emptyMessage = statusFilter
-        ? `No certificates match the status "${statusFilter}" or your search.`
+    const emptyMessage = statusFilter || deferredSearch.trim()
+        ? "No certificates match your current filters."
         : "No certificate delivery records found.";
 
     return (
@@ -463,6 +456,32 @@ export default function DeliveriesDashboard() {
                     </>
                 )}
             </div>
+
+            {pagination && pagination.totalPages > 1 ? (
+                <div className="flex items-center justify-between text-sm text-[var(--color-neon-muted)]">
+                    <span>
+                        Page {pagination.page} of {pagination.totalPages} &mdash; {pagination.total} total
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            disabled={!pagination.hasPreviousPage}
+                            onClick={() => setPage((p) => p - 1)}
+                            className="rounded-lg border border-[var(--color-neon-border)] px-3 py-1.5 text-xs transition-colors hover:border-[var(--color-neon-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            type="button"
+                            disabled={!pagination.hasNextPage}
+                            onClick={() => setPage((p) => p + 1)}
+                            className="rounded-lg border border-[var(--color-neon-border)] px-3 py-1.5 text-xs transition-colors hover:border-[var(--color-neon-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 }
