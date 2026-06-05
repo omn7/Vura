@@ -7,8 +7,14 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 const searchParamsSchema = z.object({
-    search: z.string().trim().optional(),
-    status: z.enum(["PENDING", "SENT", "FAILED", "REVOKED"]).optional(), // Assuming these are your valid statuses
+    search: z.string().trim().nullable().optional(),
+    status: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            return String(val).toLowerCase();
+        },
+        z.enum(["pending", "sent", "failed", "generated", "revoked"]).optional()
+    ),
 });
 
 export async function GET(req: NextRequest, context: { params: Promise<{ batchId: string }> }) {

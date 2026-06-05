@@ -131,7 +131,7 @@ export default async function DashboardPage() {
                                             <td>
                                                 <div className="flex items-center justify-end gap-2">
                                                     {/* COPY LINK BUTTON - GSSoC 2026 Feature */}
-                                                    <CopyLinkButton url={`https://vurakit.vercel.app/verify/${cert.certificateId}`} />
+                                                    <CopyLinkButton url={`https://vurakit.in/verify/${cert.certificateId}`} />
 
                                                     {/* View PDF Button */}
                                                     <a href={cert.pdfUrl} target="_blank" rel="noreferrer"

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
     const templateBuffer = await templateResponse.arrayBuffer();
     const protocol = req.headers.get("x-forwarded-proto") ?? "https";
-    const host = req.headers.get("host") ?? "vurakit.vercel.app";
+    const host = req.headers.get("host") ?? "vurakit.in";
     const baseUrl = `${protocol}://${host}`;
 
     await prisma.certificate.update({
@@ -91,12 +91,33 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
         if (certificate.recipientEmail) {
             try {
+                const emailQueue = await prisma.emailQueue.findUnique({
+                    where: { certificateId: certificate.certificateId }
+                });
+
                 await sendCertificateEmail({
                     recipientEmail: certificate.recipientEmail,
                     recipientName: certificate.name,
                     certificateId: certificate.certificateId,
                     verifyUrl: `${baseUrl}/verify/${certificate.certificateId}`,
+                    subject: emailQueue?.subject || undefined,
+                    cc: emailQueue?.cc || undefined,
+                    body: emailQueue?.body || undefined,
+                    theme: emailQueue?.theme || undefined,
+                    course: certificate.course,
                 });
+
+                if (emailQueue) {
+                    await prisma.emailQueue.update({
+                        where: { id: emailQueue.id },
+                        data: {
+                            status: "sent",
+                            attempts: emailQueue.attempts + 1,
+                            lastAttempt: new Date(),
+                            error: null,
+                        }
+                    });
+                }
 
                 await prisma.certificate.update({
                     where: { certificateId: certificate.certificateId },
@@ -108,6 +129,23 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
                 });
             } catch (emailError) {
                 const failureReason = getErrorMessage(emailError);
+                
+                const emailQueue = await prisma.emailQueue.findUnique({
+                    where: { certificateId: certificate.certificateId }
+                });
+
+                if (emailQueue) {
+                    await prisma.emailQueue.update({
+                        where: { id: emailQueue.id },
+                        data: {
+                            status: "failed",
+                            attempts: emailQueue.attempts + 1,
+                            lastAttempt: new Date(),
+                            error: failureReason,
+                        }
+                    });
+                }
+
                 await prisma.certificate.update({
                     where: { certificateId: certificate.certificateId },
                     data: { status: "failed", failureReason },

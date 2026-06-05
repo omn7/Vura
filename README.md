@@ -6,7 +6,7 @@
 
 **Bulk-generate, digitally sign, and publicly verify certificates — in minutes, not hours.**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-vurakit.vercel.app-6366f1?style=for-the-badge)](https://vurakit.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-vurakit.in-6366f1?style=for-the-badge)](https://vurakit.in/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
@@ -33,7 +33,8 @@ Vura is a production-ready certificate automation platform built for event organ
 - **Public Verification** — Every certificate carries a unique Certificate ID and QR code. Anyone can verify authenticity instantly via a public URL — no login required.
 - **Secure Storage** — Generated certificates are stored on AWS S3. Metadata (names, IDs, issue dates) is persisted in Neon PostgreSQL via Prisma ORM.
 - **Organization Auth** — NextAuth.js with bcrypt password hashing protects organization dashboards and templates. Each org manages its own certificate issuance independently.
-- **Email Delivery** — Certificates are automatically emailed to recipients via Nodemailer upon generation.
+- **Email Delivery & Themes** — Swapped Nodemailer for Resend. Deliver certificates using custom HTML themes (Formal, Modern Neon, Minimalist) with live previews and a secured post-generation composer.
+- **Email Reservation & Queue** — Save sends as pending reservations, select specific recipients, and bulk dispatch emails chunk-by-chunk with retry logging.
 - **Animated UI** — Responsive frontend built with Tailwind CSS v4 and Framer Motion for smooth, polished interactions.
 - **CI/CD Pipeline** — GitHub Actions workflow automates linting, building, and deployment on every push to `main`.
 
@@ -53,7 +54,7 @@ Vura is a production-ready certificate automation platform built for event organ
 | PDF Generation | pdf-lib |
 | QR Codes | qrcode |
 | Excel Parsing | xlsx |
-| Email | Nodemailer |
+| Email | Resend |
 | CI/CD | GitHub Actions |
 | Deployment | Vercel |
 
@@ -68,13 +69,13 @@ Excel Upload (.xlsx)
   Parse Rows  ──►  Map to PDF Template (pdf-lib)
        │
        ▼
- Generate Certificate
+  Generate Certificate
        │
        ├──► Assign unique Certificate ID
        ├──► Embed QR Code → links to /verify/[id]
        ├──► Upload to AWS S3
        ├──► Save metadata to Neon PostgreSQL (Prisma)
-       └──► Email to recipient (Nodemailer)
+       └──► Secure Email Composer & Delivery Queue (Resend)
 
 Public Verification:
   /verify/[certificateId]  ──►  Query DB  ──►  Show certificate details
@@ -119,11 +120,10 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 AWS_REGION="ap-south-1"
 AWS_S3_BUCKET_NAME="your-bucket-name"
 
-# Email
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT=587
-SMTP_USER="your-email@gmail.com"
-SMTP_PASS="your-app-password"
+# Email (Resend)
+RESEND_API_KEY="re_..."
+RESEND_FROM="Vura Certificates <noreply@yourdomain.com>"
+# Fallback if no domain is verified on Resend: "Vura <onboarding@resend.dev>"
 ```
 
 ### Database Setup
@@ -149,7 +149,7 @@ Open [http://localhost:3000](http://localhost:3000).
 3. **Upload an Excel sheet** with participant data (name, email, role, etc.).
 4. **Map Excel columns** to template fields and click Generate.
 5. Vura generates all certificates, uploads them to S3, saves records to the database, and emails each participant.
-6. Recipients can **scan the QR code** on their certificate to verify it at `vurakit.vercel.app/verify/[id]`.
+6. Recipients can **scan the QR code** on their certificate to verify it at `vurakit.in/verify/[id]`.
 
 ---
 
@@ -170,7 +170,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Live Demo
 
-🔗 [vurakit.vercel.app](https://vurakit.vercel.app/)
+🔗 [vurakit.in](https://vurakit.in/)
 
 ---
 
@@ -184,7 +184,7 @@ Check out our official project details and tracking here: **[Vura on GSSoC Porta
 
 ---
 
-**Contributor Recognition**: We value your effort! Once your Pull Request is successfully merged into the repository, your name will be featured on our Contributor Wall, and you will be issued a digital certificate of contribution for your work on Vura. https://vurakit.vercel.app/contributor
+**Contributor Recognition**: We value your effort! Once your Pull Request is successfully merged into the repository, your name will be featured on our Contributor Wall, and you will be issued a digital certificate of contribution for your work on Vura. https://vurakit.in/contributor
 
 
 ## Author

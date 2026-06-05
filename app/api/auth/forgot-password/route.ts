@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
+import { sendPasswordResetEmail } from "@/lib/certificateEmail";
 import { forgotPasswordSchema } from "@/lib/validations";
 import {
     AUTH_RATE_LIMIT_MESSAGE,
@@ -71,33 +71,15 @@ export async function POST(req: Request) {
             },
         });
 
-        // We use ethereal or mock if env vars are missing
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST || "smtp.ethereal.email",
-            port: Number(process.env.SMTP_PORT) || 587,
-            auth: {
-                user: process.env.SMTP_USER || "mock_user",
-                pass: process.env.SMTP_PASS || "mock_pass",
-            },
-        });
-
         const resetUrl = `${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/reset-password/${resetToken}`;
 
         try {
-            await transporter.sendMail({
-                from: process.env.SMTP_FROM || '"Vura" <noreply@vura.com>',
-                to: email,
-                subject: "Password Reset Request",
-                html: `
-                    <h1>Reset your password</h1>
-                    <p>You requested to reset your password. Click the link below to set a new password:</p>
-                    <a href="${resetUrl}">${resetUrl}</a>
-                    <p>If you didn't request this, you can safely ignore this email.</p>
-                    <p>This link is valid for 1 hour.</p>
-                `,
+            await sendPasswordResetEmail({
+                email,
+                resetUrl
             });
         } catch (mailError: any) {
-            // It might fail if no valid SMTP is configured. We'll still allow the token to be set, 
+            // It might fail if no valid Resend key is configured. We'll still allow the token to be set, 
             // but we can log the error or print the url for dev purposes.
             console.error("Failed to send email. If you are in dev, here is the reset URL:", resetUrl);
             console.error(mailError);
