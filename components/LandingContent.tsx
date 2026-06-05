@@ -1062,13 +1062,28 @@ export default function LandingContent({ session }: { session: any }) {
                 Join educators and event organizers saving hours each month with
                 Vura.
               </p>
-              <Link
-                href={session ? "/app" : "/register"}
-                className="relative inline-flex items-center justify-center px-10 py-4 text-lg font-semibold text-[var(--color-neon-primary)] bg-transparent border border-[var(--color-neon-primary)] rounded-full hover:bg-[var(--color-neon-primary)]/10 hover:shadow-[0_0_20px_rgba(0,229,153,0.35)] hover:-translate-y-0.5 transition-all duration-300 group gap-2"
-              >
-                Start Generating Certificates{" "}
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    href={session ? "/app" : "/register"}
+                    className="relative inline-flex items-center justify-center px-10 py-4 text-lg font-semibold text-[var(--color-neon-primary)] bg-transparent border border-[var(--color-neon-primary)] rounded-full hover:bg-[var(--color-neon-primary)]/10 hover:shadow-[0_0_20px_rgba(0,229,153,0.35)] hover:-translate-y-0.5 transition-all duration-300 group gap-2"
+                  >
+                    Start Generating Certificates{" "}
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <a
+                    href="https://drive.google.com/drive/folders/1ztzLKjZdfDpsbhS3ORd8L5KHsBt9AQI7?usp=sharing"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="relative inline-flex items-center justify-center px-8 py-3 text-base font-semibold text-white/80 bg-transparent border border-white/20 rounded-full hover:text-white hover:border-white/40 hover:bg-white/5 transition-all duration-300"
+                  >
+                    Download Sample Data (CSV)
+                  </a>
+                </div>
+                <p className="text-sm text-[var(--color-neon-muted)]">
+                  Use this CSV to test bulk certificate generation.
+                </p>
+              </div>
             </motion.div>
           </section>
         </div>
