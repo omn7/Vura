@@ -21,7 +21,7 @@ export default function ApiKeyPage() {
                     <h2 className="font-semibold text-white">Quick Reference</h2>
                 </div>
                 <div className="rounded-xl bg-[#0d0d0d] border border-[var(--color-neon-border)] p-4 font-mono text-xs text-gray-300 space-y-1 overflow-x-auto">
-                    <p><span className="text-purple-400">POST</span> https://vurakit.vercel.app/api/certificates/create</p>
+                    <p><span className="text-purple-400">POST</span> https://vurakit.in/api/certificates/create</p>
                     <p><span className="text-[var(--color-neon-muted)]">Authorization:</span> Bearer {"<your_api_key>"}</p>
                     <p><span className="text-[var(--color-neon-muted)]">Content-Type:</span> application/json</p>
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import * as xlsx from "xlsx";
 import {
   FileUp,
   FileSpreadsheet,
@@ -18,7 +19,7 @@ import {
   Download,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import JSZip from "jszip";
@@ -29,8 +30,53 @@ const PdfPreview = dynamic(() => import("@/components/PdfPreview"), {
   ssr: false,
 });
 
+const EMAIL_TEMPLATES = {
+  formal: {
+    label: "Formal",
+    subject: "Your certificate is ready",
+    body:
+      "Dear {name},\n\nYour certificate has been generated successfully. Please find your verification link below.\n\nRegards,\nVura Team",
+  },
+  friendly: {
+    label: "Friendly",
+    subject: "Good news! Your certificate is ready",
+    body:
+      "Hi {name},\n\nYour certificate is ready and waiting for you. We’ve attached your verification link below.\n\nBest wishes,\nThe Vura Team",
+  },
+  short: {
+    label: "Short",
+    subject: "Certificate ready",
+    body:
+      "Hi {name},\n\nYour certificate is ready. Use the verification link below to view it.\n\nThanks,\nVura",
+  },
+} as const;
+
+type EmailTemplateId = keyof typeof EMAIL_TEMPLATES;
+
+function normalizeKey(key: string) {
+  return key.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function detectEmailHeaders(rows: Record<string, unknown>[]) {
+  if (rows.length === 0) return [] as string[];
+
+  const headers = Object.keys(rows[0]);
+  return headers.filter((header) => {
+    const normalized = normalizeKey(header);
+    return (
+      normalized === "email" ||
+      normalized === "recipientemail" ||
+      normalized === "recipientemailaddress" ||
+      normalized === "emailaddress" ||
+      normalized === "mail" ||
+      normalized.includes("email")
+    );
+  });
+}
+
 export default function Dashboard() {
   const { status } = useSession();
+  const router = useRouter();
 
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [excelFile, setExcelFile] = useState<File | null>(null);
@@ -42,6 +88,13 @@ export default function Dashboard() {
   const [batchId, setBatchId] = useState<string | null>(null);
   const [saveToDb, setSaveToDb] = useState(false);
   const [isZipping, setIsZipping] = useState(false);
+  const [emailHeaders, setEmailHeaders] = useState<string[]>([]);
+  const [sendEmails, setSendEmails] = useState(false);
+  const [emailTemplate, setEmailTemplate] = useState<EmailTemplateId>("formal");
+  const [customEmailBody, setCustomEmailBody] = useState<string>(
+    EMAIL_TEMPLATES.formal.body,
+  );
+  const [inspectingDataset, setInspectingDataset] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated" && saveToDb === false) {
@@ -133,6 +186,60 @@ export default function Dashboard() {
     }
   }, [pdfFile]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function inspectDataset() {
+      if (!excelFile) {
+        setEmailHeaders([]);
+        setSendEmails(false);
+        return;
+      }
+
+      setInspectingDataset(true);
+      try {
+        const buffer = await excelFile.arrayBuffer();
+        const datasetName = excelFile.name.toLowerCase();
+        let rows: Record<string, unknown>[] = [];
+
+        if (datasetName.endsWith(".csv")) {
+          const csvText = new TextDecoder().decode(buffer);
+          const workbook = xlsx.read(csvText, { type: "string" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          rows = xlsx.utils.sheet_to_json<Record<string, unknown>>(sheet);
+        } else {
+          const workbook = xlsx.read(buffer, { type: "buffer" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          rows = xlsx.utils.sheet_to_json<Record<string, unknown>>(sheet);
+        }
+
+        const headers = detectEmailHeaders(rows);
+        if (!cancelled) {
+          setEmailHeaders(headers);
+          if (headers.length === 0) {
+            setSendEmails(false);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to inspect dataset for email columns", err);
+        if (!cancelled) {
+          setEmailHeaders([]);
+          setSendEmails(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setInspectingDataset(false);
+        }
+      }
+    }
+
+    inspectDataset();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [excelFile]);
+
   const handlePdfClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!activeTarget) return;
 
@@ -159,6 +266,18 @@ export default function Dashboard() {
       return;
     }
 
+    if (sendEmails && emailHeaders.length === 0) {
+      setError(
+        "No email column was found in the dataset. Add an email column or disable email sending.",
+      );
+      return;
+    }
+
+    if (sendEmails && !customEmailBody.trim()) {
+      setError("Please enter the email message before sending certificates.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccessCount(null);
@@ -171,6 +290,9 @@ export default function Dashboard() {
     formData.append("dataset", excelFile);
     formData.append("settings", JSON.stringify(config));
     formData.append("saveToDb", String(saveToDb));
+    formData.append("sendEmails", String(sendEmails));
+    formData.append("emailTemplate", emailTemplate);
+    formData.append("customEmailBody", customEmailBody.trim());
 
     try {
       const response = await fetch("/api/generate", {
@@ -187,9 +309,16 @@ export default function Dashboard() {
       setSuccessCount(data.count || 0);
       setCertificates(data.certificates || []);
       setBatchId(typeof data.batchId === "string" ? data.batchId : null);
+      const emailNotice = data.emailsSentCount
+        ? ` and emailed ${data.emailsSentCount}`
+        : "";
       setStatusText(
-        `Successfully generated and uploaded ${data.count} certificates.`,
+        `Successfully generated ${data.count} certificates${emailNotice}.`,
       );
+
+      if (data.composeToken) {
+        router.push(`/app/compose?token=${data.composeToken}&batch=${data.batchId}`);
+      }
     } catch (err: unknown) {
       console.error(err);
       setError(
@@ -945,6 +1074,92 @@ export default function Dashboard() {
                     )}
                   </div>
 
+                  {/* Email delivery settings */}
+                  <div className="pt-4 border-t border-[var(--color-neon-border)]/30 mt-2 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-white">
+                          Email Delivery
+                        </h4>
+                        <p className="text-xs text-[var(--color-neon-muted)] mt-1">
+                          {inspectingDataset
+                            ? "Scanning your spreadsheet for email columns..."
+                            : emailHeaders.length > 0
+                              ? `Email column found: ${emailHeaders.join(", ")}`
+                              : "Add an email column to your sheet to enable sending."}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={emailHeaders.length === 0 || inspectingDataset || status === "unauthenticated"}
+                        onClick={() => {
+                          if (emailHeaders.length === 0 || inspectingDataset || status === "unauthenticated") return;
+                          setSendEmails((prev) => {
+                            const next = !prev;
+                            if (next && !saveToDb) {
+                              setSaveToDb(true);
+                            }
+                            return next;
+                          });
+                        }}
+                        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors border ${sendEmails ? "border-transparent bg-green-500" : "border-[var(--color-neon-border)] bg-transparent"} ${(emailHeaders.length === 0 || inspectingDataset || status === "unauthenticated") ? "opacity-50 cursor-not-allowed" : ""}`}
+                        title={
+                          emailHeaders.length === 0
+                            ? "No email column detected"
+                            : "Toggle email sending"
+                        }
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${sendEmails ? "translate-x-4" : "translate-x-1"}`}
+                        />
+                      </button>
+                    </div>
+
+                    {sendEmails && emailHeaders.length > 0 && (
+                      <div className="space-y-4 bg-black/20 p-4 rounded-xl border border-[var(--color-neon-border)]/50">
+                        <div>
+                          <label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">
+                            Email Template
+                          </label>
+                          <select
+                            value={emailTemplate}
+                            onChange={(e) => {
+                              const nextTemplate = e.target.value as EmailTemplateId;
+                              setEmailTemplate(nextTemplate);
+                              setCustomEmailBody(EMAIL_TEMPLATES[nextTemplate].body);
+                            }}
+                            className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-2.5 text-sm text-white focus:border-[var(--color-neon-primary)] outline-none transition-colors"
+                          >
+                            {(Object.entries(EMAIL_TEMPLATES) as [
+                              EmailTemplateId,
+                              (typeof EMAIL_TEMPLATES)[EmailTemplateId],
+                            ][]).map(([key, template]) => (
+                              <option key={key} value={key}>
+                                {template.label} - {template.subject}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">
+                            Email Message
+                          </label>
+                          <textarea
+                            value={customEmailBody}
+                            onChange={(e) => setCustomEmailBody(e.target.value)}
+                            rows={6}
+                            placeholder="Write a message to include in the email..."
+                            className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-lg p-3 text-sm text-white focus:border-[var(--color-neon-primary)] outline-none transition-colors resize-y"
+                          />
+                          <p className="text-[11px] text-[var(--color-neon-muted)] mt-2">
+                            Use <span className="text-[var(--color-neon-primary)]">{`{name}`}</span> to personalize each email.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Save to Database Toggle */}
                   <div className="pt-4 border-t border-[var(--color-neon-border)]/30 mt-2">
                     <div className="flex items-center justify-between">
@@ -952,14 +1167,17 @@ export default function Dashboard() {
                         className={`flex items-center space-x-3 transition-opacity ${status === "unauthenticated" ? "opacity-50 cursor-not-allowed" : "cursor-pointer group"}`}
                         onClick={() => {
                           if (status === "unauthenticated") return;
-                          setSaveToDb(!saveToDb);
-                          if (saveToDb) {
-                            // going from true to false
-                            setConfig((prev) => ({
-                              ...prev,
-                              qrCode: { ...prev.qrCode, enabled: false },
-                            }));
-                          }
+                          setSaveToDb((prev) => {
+                            const next = !prev;
+                            if (!next) {
+                              setSendEmails(false);
+                              setConfig((current) => ({
+                                ...current,
+                                qrCode: { ...current.qrCode, enabled: false },
+                              }));
+                            }
+                            return next;
+                          });
                         }}
                       >
                         <div
@@ -979,6 +1197,11 @@ export default function Dashboard() {
                         {status === "unauthenticated"
                           ? "Log in to enable saving securely to the gallery and QR verification."
                           : "Database saving disabled. Documents won't appear in gallery. QR Verification is turned off."}
+                      </p>
+                    )}
+                    {sendEmails && emailHeaders.length > 0 && (
+                      <p className="text-xs text-[var(--color-neon-primary)] mt-2">
+                        Email sending is enabled. Each row with a valid email address will receive the selected template after generation.
                       </p>
                     )}
                   </div>

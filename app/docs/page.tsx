@@ -16,9 +16,9 @@ import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
 // ─────────────────────────────────────────────
 const verifySnippets = {
     curl: `curl -X GET \
-  "https://vurakit.vercel.app/api/verify/CERT-A1B2C3D4"`,
+  "https://vurakit.in/api/verify/CERT-A1B2C3D4"`,
     js: `const res = await fetch(
-  "https://vurakit.vercel.app/api/verify/CERT-A1B2C3D4"
+  "https://vurakit.in/api/verify/CERT-A1B2C3D4"
 );
 const data = await res.json();
 
@@ -29,7 +29,7 @@ if (res.ok) {
     python: `import requests
 
 res = requests.get(
-    "https://vurakit.vercel.app/api/verify/CERT-A1B2C3D4"
+    "https://vurakit.in/api/verify/CERT-A1B2C3D4"
 )
 data = res.json()
 
@@ -39,7 +39,7 @@ if res.status_code == 200:
 
 const createSnippets = {
     curl: `curl -X POST \
-  "https://vurakit.vercel.app/api/certificates/create" \
+  "https://vurakit.in/api/certificates/create" \
   -H "Authorization: Bearer vura_your_api_key" \  # <<< REPLACE WITH YOUR REAL API KEY
   -H "Content-Type: application/json" \
   -d '{
@@ -49,7 +49,7 @@ const createSnippets = {
     "templateUrl": "https://your-bucket.s3.amazonaws.com/template.pdf"
   }'`,
     js: `const res = await fetch(
-  "https://vurakit.vercel.app/api/certificates/create",
+  "https://vurakit.in/api/certificates/create",
   {
     method: "POST",
     headers: {
@@ -70,7 +70,7 @@ console.log("Certificate ID:", data.certificateId);`,
     python: `import requests
 
 res = requests.post(
-    "https://vurakit.vercel.app/api/certificates/create",
+    "https://vurakit.in/api/certificates/create",
     headers={
         "Authorization": "Bearer vura_your_api_key", # <<< REPLACE WITH YOUR REAL API KEY
         "Content-Type": "application/json",
@@ -420,9 +420,9 @@ export default function DocsPage() {
                                     <div className="flex flex-col md:flex-row items-start md:items-center gap-3 rounded-2xl border border-[var(--color-neon-border)] bg-[#0d0d0d] px-6 py-4">
                                         <span className="text-xs font-bold px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">GET</span>
                                         <code className="flex-1 text-sm text-white font-mono break-all">
-                                            https://vurakit.vercel.app/api/verify/<span className="text-emerald-400">{"{"}&#123;id&#125;{"}"}</span>
+                                            https://vurakit.in/api/verify/<span className="text-emerald-400">{"{"}&#123;id&#125;{"}"}</span>
                                         </code>
-                                        <CopyButton text="https://vurakit.vercel.app/api/verify/{id}" />
+                                        <CopyButton text="https://vurakit.in/api/verify/{id}" />
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         {[ 
@@ -502,8 +502,8 @@ export default function DocsPage() {
                                     <h3 className="text-lg font-semibold text-white flex items-center gap-2"><Globe className="w-4 h-4 text-purple-400" /> Step 2 — Call the Endpoint</h3>
                                     <div className="flex flex-col md:flex-row items-start md:items-center gap-3 rounded-2xl border border-[var(--color-neon-border)] bg-[#0d0d0d] px-6 py-4">
                                         <span className="text-xs font-bold px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-full">POST</span>
-                                        <code className="flex-1 text-sm text-white font-mono break-all">https://vurakit.vercel.app/api/certificates/create</code>
-                                        <CopyButton text="https://vurakit.vercel.app/api/certificates/create" />
+                                        <code className="flex-1 text-sm text-white font-mono break-all">https://vurakit.in/api/certificates/create</code>
+                                        <CopyButton text="https://vurakit.in/api/certificates/create" />
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {/* Request body */}
@@ -546,7 +546,7 @@ export default function DocsPage() {
   "success": true,
   "certificateId": "CERT-A1B2C3D4",
   "pdfUrl": "https://s3.amazonaws.com/...pdf",
-  "verifyUrl": "https://vurakit.vercel.app/verify/CERT-A1B2C3D4"
+  "verifyUrl": "https://vurakit.in/verify/CERT-A1B2C3D4"
 }`} />
                                             <div className="rounded-xl border border-[var(--color-neon-border)] bg-[#0a0a0a] overflow-hidden text-xs">
                                                 <table className="w-full">

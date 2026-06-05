@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as xlsx from "xlsx";
+import crypto from "crypto";
 import prisma from "@/lib/prisma";
 import { generateCertificate } from "@/lib/generateCertificate";
 import { uploadToS3 } from "@/lib/s3";
@@ -62,6 +63,11 @@ export async function POST(req: NextRequest) {
     const templateFile = formData.get("template") as File | null;
     const datasetFile = formData.get("dataset") as File | null;
     const eventIdString = formData.get("eventId") as string | null;
+    const sendEmails = formData.get("sendEmails") === "true";
+    const emailTemplate =
+      (formData.get("emailTemplate") as "formal" | "friendly" | "short" | null) ??
+      "formal";
+    const customEmailBody = (formData.get("customEmailBody") as string | null) ?? "";
 
     if (!templateFile || !datasetFile) {
       return NextResponse.json(
@@ -262,6 +268,7 @@ export async function POST(req: NextRequest) {
 
     const generatedRecords: GeneratedCertificate[] = [];
     const userId = session?.user?.id || "anonymous";
+    let emailsSentCount = 0;
 
     for (const row of rows) {
       const certificateId = generateCertificateId();
@@ -342,14 +349,19 @@ export async function POST(req: NextRequest) {
         let failureReason: string | null = null;
         let sentAt: string | null = null;
 
-        if (saveToDb && recipientEmail) {
+        if (saveToDb && sendEmails && recipientEmail) {
           try {
             await sendCertificateEmail({
               recipientEmail,
               recipientName: certData.name,
               certificateId,
               verifyUrl: `${dynamicBaseUrl ?? `${protocol}://localhost:3000`}/verify/${certificateId}`,
+              theme: emailTemplate || undefined,
+              body: customEmailBody || undefined,
+              course: certData.course,
             });
+
+            emailsSentCount += 1;
 
             const sentRecord = await prisma.certificate.update({
               where: { certificateId },
@@ -424,11 +436,33 @@ export async function POST(req: NextRequest) {
       (record) => record.status !== "failed",
     ).length;
 
+    let composeToken = null;
+    if (saveToDb && userId !== "anonymous") {
+      try {
+        const token = crypto.randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins expiry
+
+        await prisma.composeSession.create({
+          data: {
+            token,
+            batchId,
+            userId,
+            expiresAt,
+          },
+        });
+        composeToken = token;
+      } catch (sessionError) {
+        console.error("Failed to create ComposeSession:", sessionError);
+      }
+    }
+
     return NextResponse.json(
       {
         count: count,
         success: true,
         batchId,
+        emailsSentCount,
+        composeToken,
         certificates: generatedRecords,
       },
       { status: 200 },

@@ -38,7 +38,7 @@ jobs:
 - **Merge Commit:** [${mergeCommitSha}](${mergeCommitUrl})
 
 If you'd like to download your contribution certificate and view your profile, please visit:
-https://vurakit.vercel.app/contributor
+https://vurakit.in/contributor
 
 We're grateful for your support!`;
             
