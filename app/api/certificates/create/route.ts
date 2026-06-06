@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
 
     // ── 5. Generate the certificate PDF ─────────────────────────────────
     const protocol = req.headers.get("x-forwarded-proto") ?? "https";
-    const host = req.headers.get("host") ?? "vurakit.vercel.app";
+    const host = req.headers.get("host") ?? "vurakit.in";
     const baseUrl = `${protocol}://${host}`;
 
     const certData = {

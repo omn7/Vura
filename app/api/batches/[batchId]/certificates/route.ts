@@ -8,10 +8,14 @@ import { parsePaginationParams, getPaginationMetadata, calculateSkip } from "@/l
 export const dynamic = "force-dynamic";
 
 const searchParamsSchema = z.object({
-    search: z.string().trim().optional(),
-    status: z.string().trim().optional(),
-    page: z.string().optional(),
-    limit: z.string().optional(),
+    search: z.string().trim().nullable().optional(),
+    status: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            return String(val).toLowerCase();
+        },
+        z.enum(["pending", "sent", "failed", "generated", "revoked"]).optional()
+    ),
 });
 
 export async function GET(req: NextRequest, context: { params: Promise<{ batchId: string }> }) {

@@ -71,6 +71,18 @@ export async function GET(req: NextRequest) {
                     updatedAt: true,
                     sentAt: true,
                     batchId: true,
+                    emailQueue: {
+                        select: {
+                            subject: true,
+                            cc: true,
+                            body: true,
+                            theme: true,
+                            status: true,
+                            attempts: true,
+                            error: true,
+                            lastAttempt: true,
+                        }
+                    }
                 },
                 skip,
                 take: parsedLimit,

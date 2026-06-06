@@ -18,6 +18,17 @@ import {
 
 type CertificateStatus = "pending" | "generated" | "sent" | "failed" | string;
 
+type EmailQueueRecord = {
+    subject: string;
+    cc: string | null;
+    body: string;
+    theme: string;
+    status: string;
+    attempts: number;
+    error: string | null;
+    lastAttempt: string | null;
+};
+
 type CertificateRecord = {
     id: string;
     certificateId: string;
@@ -31,6 +42,7 @@ type CertificateRecord = {
     updatedAt: string;
     sentAt: string | null;
     batchId: string | null;
+    emailQueue?: EmailQueueRecord | null;
 };
 
 const STATUS_OPTIONS = [
@@ -40,7 +52,35 @@ const STATUS_OPTIONS = [
     { value: "failed", label: "Failed" },
 ];
 
-function getStatusInfo(status: CertificateStatus) {
+function getStatusInfo(status: CertificateStatus, emailQueue?: EmailQueueRecord | null) {
+    if (emailQueue) {
+        if (emailQueue.status === "sent") {
+            return {
+                label: "Delivered",
+                style: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                icon: CheckCircle2
+            };
+        }
+        if (emailQueue.status === "processing") {
+            return {
+                label: "Sending...",
+                style: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+                icon: Loader2
+            };
+        }
+        if (emailQueue.status === "pending") {
+            return {
+                label: "Queue Pending",
+                style: "bg-amber-500/10 text-amber-300 border-amber-500/20",
+                icon: Clock
+            };
+        }
+        return {
+            label: "Failed Send",
+            style: "bg-rose-500/10 text-rose-300 border-rose-500/20",
+            icon: XCircle
+        };
+    }
     if (status === "sent" || status === "generated") {
         return {
             label: "Delivered",
@@ -119,9 +159,10 @@ export default function DeliveriesDashboard() {
                     const payload = await response.json().catch(() => null);
                     throw new Error(payload?.error || "Failed to load delivery records.");
                 }
-                const json = await response.json();
-                setRecords(Array.isArray(json.data) ? json.data : []);
-                setPagination(json.pagination ?? null);
+                const data = await response.json();
+                if (active) {
+                    setRecords(Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []));
+                }
             } catch (err) {
                 if (controller.signal.aborted) return;
                 setError(err instanceof Error ? err.message : "Failed to load delivery records.");
@@ -139,11 +180,12 @@ export default function DeliveriesDashboard() {
         return records.reduce(
             (acc, record) => {
                 acc.total += 1;
-                if (record.status === "sent" || record.status === "generated") {
+                const statusInfo = getStatusInfo(record.status, record.emailQueue);
+                if (statusInfo.label === "Delivered") {
                     acc.delivered += 1;
-                } else if (record.status === "pending") {
+                } else if (statusInfo.label === "Queue Pending" || statusInfo.label === "Pending" || statusInfo.label === "Sending...") {
                     acc.pending += 1;
-                } else if (record.status === "failed") {
+                } else {
                     acc.failed += 1;
                 }
                 return acc;
@@ -152,7 +194,32 @@ export default function DeliveriesDashboard() {
         );
     }, [records]);
 
-    const filteredRecords = records;
+    // Filter and search records client-side
+    const filteredRecords = useMemo(() => {
+        return records.filter((record) => {
+            // Status match
+            if (statusFilter) {
+                const info = getStatusInfo(record.status, record.emailQueue);
+                const filterLower = statusFilter.toLowerCase();
+                const labelLower = info.label.toLowerCase();
+                if (filterLower === "delivered" && labelLower !== "delivered") return false;
+                if (filterLower === "pending" && labelLower !== "pending" && labelLower !== "queue pending" && labelLower !== "sending...") return false;
+                if (filterLower === "failed" && labelLower !== "failed" && labelLower !== "failed send") return false;
+            }
+
+            // Search match
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase();
+                const nameMatch = record.name.toLowerCase().includes(q);
+                const emailMatch = record.recipientEmail?.toLowerCase().includes(q) ?? false;
+                const idMatch = record.certificateId.toLowerCase().includes(q);
+                const courseMatch = record.course.toLowerCase().includes(q);
+                return nameMatch || emailMatch || idMatch || courseMatch;
+            }
+
+            return true;
+        });
+    }, [records, statusFilter, searchQuery]);
 
     // Copy link helper
     async function handleCopyLink(certificateId: string) {
@@ -293,8 +360,8 @@ export default function DeliveriesDashboard() {
                                 </thead>
                                 <tbody>
                                     {filteredRecords.map((record) => {
-                                        const statusInfo = getStatusInfo(record.status);
-                                        const StatusIconComponent = statusInfo.icon;
+                                         const statusInfo = getStatusInfo(record.status, record.emailQueue);
+                                         const StatusIconComponent = statusInfo.icon;
                                         return (
                                             <tr key={record.id} className="hover:bg-white/[0.01] transition-colors">
                                                 {/* Certificate ID */}
@@ -361,22 +428,22 @@ export default function DeliveriesDashboard() {
                                                             <ExternalLink className="w-3 h-3" /> View
                                                         </a>
 
-                                                        {/* Retry Button */}
-                                                        {record.status === "failed" && (
-                                                            <button
-                                                                type="button"
-                                                                disabled={retryingId === record.certificateId}
-                                                                onClick={() => handleRetry(record.certificateId)}
-                                                                className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 px-2.5 py-1.5 text-xs text-rose-300 transition-colors hover:border-rose-400 hover:text-rose-200 disabled:opacity-60"
-                                                            >
-                                                                {retryingId === record.certificateId ? (
-                                                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                                                ) : (
-                                                                    <RefreshCw className="w-3 h-3" />
-                                                                )}
-                                                                Retry
-                                                            </button>
-                                                        )}
+                                                         {/* Retry Button */}
+                                                         {(record.status === "failed" || record.emailQueue?.status === "failed") && (
+                                                             <button
+                                                                 type="button"
+                                                                 disabled={retryingId === record.certificateId}
+                                                                 onClick={() => handleRetry(record.certificateId)}
+                                                                 className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 px-2.5 py-1.5 text-xs text-rose-300 transition-colors hover:border-rose-400 hover:text-rose-200 disabled:opacity-60"
+                                                             >
+                                                                 {retryingId === record.certificateId ? (
+                                                                     <Loader2 className="w-3 h-3 animate-spin" />
+                                                                 ) : (
+                                                                     <RefreshCw className="w-3 h-3" />
+                                                                 )}
+                                                                 Retry
+                                                             </button>
+                                                         )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -388,9 +455,9 @@ export default function DeliveriesDashboard() {
 
                         {/* Mobile List View */}
                         <div className="grid gap-4 p-4 md:hidden">
-                            {filteredRecords.map((record) => {
-                                const statusInfo = getStatusInfo(record.status);
-                                const StatusIconComponent = statusInfo.icon;
+                             {filteredRecords.map((record) => {
+                                 const statusInfo = getStatusInfo(record.status, record.emailQueue);
+                                 const StatusIconComponent = statusInfo.icon;
                                 return (
                                     <article key={record.id} className="rounded-2xl border border-[var(--color-neon-border)] bg-[var(--color-neon-surface)] p-4 space-y-4">
                                         <div className="flex items-start justify-between gap-3">
@@ -433,21 +500,21 @@ export default function DeliveriesDashboard() {
                                             >
                                                 <ExternalLink className="w-3 h-3" /> View
                                             </a>
-                                            {record.status === "failed" && (
-                                                <button
-                                                    type="button"
-                                                    disabled={retryingId === record.certificateId}
-                                                    onClick={() => handleRetry(record.certificateId)}
-                                                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-500/30 px-3 py-2.5 text-xs text-rose-300 disabled:opacity-60"
-                                                >
-                                                    {retryingId === record.certificateId ? (
-                                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                    ) : (
-                                                        <RefreshCw className="w-3.5 h-3.5" />
-                                                    )}
-                                                    Retry Delivery
-                                                </button>
-                                            )}
+                                            {(record.status === "failed" || record.emailQueue?.status === "failed") && (
+                                                 <button
+                                                     type="button"
+                                                     disabled={retryingId === record.certificateId}
+                                                     onClick={() => handleRetry(record.certificateId)}
+                                                     className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-500/30 px-3 py-2.5 text-xs text-rose-300 disabled:opacity-60"
+                                                 >
+                                                     {retryingId === record.certificateId ? (
+                                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                     ) : (
+                                                         <RefreshCw className="w-3.5 h-3.5" />
+                                                     )}
+                                                     Retry Delivery
+                                                 </button>
+                                             )}
                                         </div>
                                     </article>
                                 );
