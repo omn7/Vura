@@ -18,7 +18,6 @@ import {
   Search,
   QrCode,
   Github,
-  Twitter,
   Linkedin,
   ChevronDown,
   Gift,
@@ -613,7 +612,7 @@ export default function SponsorPage() {
                   rel="noreferrer"
                   className="text-[var(--color-neon-muted)] hover:text-white transition-colors"
                 >
-                  <Twitter className="w-5 h-5" />
+                  <X className="w-5 h-5" />
                 </a>
                 <a
                   href="https://linkedin.com/in/omnarkhede/"
