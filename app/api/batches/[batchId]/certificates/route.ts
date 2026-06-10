@@ -16,6 +16,22 @@ const searchParamsSchema = z.object({
         },
         z.enum(["pending", "sent", "failed", "generated", "revoked"]).optional()
     ),
+    page: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const n = Number(val);
+            return Number.isInteger(n) && n > 0 ? n : undefined;
+        },
+        z.number().int().positive().optional()
+    ),
+    limit: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const n = Number(val);
+            return Number.isInteger(n) && n > 0 ? n : undefined;
+        },
+        z.number().int().positive().optional()
+    ),
 });
 
 export async function GET(req: NextRequest, context: { params: Promise<{ batchId: string }> }) {
