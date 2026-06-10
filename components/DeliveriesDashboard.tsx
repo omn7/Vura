@@ -160,8 +160,9 @@ export default function DeliveriesDashboard() {
                     throw new Error(payload?.error || "Failed to load delivery records.");
                 }
                 const data = await response.json();
-                if (active) {
+                if (!controller.signal.aborted) {
                     setRecords(Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []));
+                    if (data?.pagination) setPagination(data.pagination);
                 }
             } catch (err) {
                 if (controller.signal.aborted) return;
