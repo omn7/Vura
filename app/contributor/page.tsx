@@ -178,28 +178,36 @@ export default function ContributorPage() {
       const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
+      // ── {{github_username}} placeholder ──────────────────────────────────
+      // Template Tm: x=78.24 y=318.00 fontSize=37.67
+      // Cover rect must fully contain the glyph: baseline y=318, ascender ~+38,
+      // descender ~-8. Add 4pt padding on every side to be safe.
       page.drawRectangle({
-        x: 75,
-        y: 310,
-        width: 600,
-        height: 50,
-        color: rgb(0.176, 0.196, 0.259), // Seamless background color!
+        x: 72,
+        y: 306,          // baseline(318) - descender(8) - padding(4)
+        width: 620,
+        height: 56,      // ascender(38) + descender(8) + padding(4+6)
+        color: rgb(0.176, 0.196, 0.259),
       });
 
+      // Draw replacement text at exact template baseline coordinates
       page.drawText(`@${login}`, {
         x: 78.24,
         y: 318.00,
-        size: 36,
+        size: 37,        // match template fontSize (37.6675)
         font: helveticaBold,
         color: rgb(0.082, 0.69, 0.608),
       });
 
+      // ── Certificate ID row ───────────────────────────────────────────────
+      // Template Tm: x=78.24 y=48.67 fontSize=12.11
+      // Cover rect: baseline y=48.67, ascender ~+12, descender ~-3, padding 3pt
       page.drawRectangle({
-        x: 75,
-        y: 42,
-        width: 320,
-        height: 20,
-        color: rgb(0.176, 0.196, 0.259), // Seamless background color!
+        x: 72,
+        y: 42,           // baseline(48.67) - descender(3) - padding(3)
+        width: 340,
+        height: 22,      // ascender(12) + descender(3) + padding(3+4)
+        color: rgb(0.176, 0.196, 0.259),
       });
 
       page.drawText(`Certificate ID: ${certificateId}`, {
@@ -210,18 +218,21 @@ export default function ContributorPage() {
         color: rgb(0.153, 0.647, 0.58),
       });
 
+      // ── Merge date + commit hash row ─────────────────────────────────────
+      // Sits on the same baseline (y=48.67) on the right half of the page.
+      // Page width=792; right-side content starts around x=442.
       page.drawRectangle({
-        x: 435,
+        x: 436,
         y: 42,
-        width: 320,
-        height: 20,
-        color: rgb(0.176, 0.196, 0.259), // Seamless background color!
+        width: 348,      // reaches to x=784, near right edge (page=792)
+        height: 22,
+        color: rgb(0.176, 0.196, 0.259),
       });
 
       const dateText = `${mergeDate}  (Commit: ${commitHash})`;
       page.drawText(dateText, {
         x: 442.03,
-        y: 48.67, // Perfectly aligned horizontally with Certificate ID
+        y: 48.67,
         size: 11,
         font: helvetica,
         color: rgb(1, 1, 1),
