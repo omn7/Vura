@@ -9,6 +9,7 @@ import { authOptions } from "@/lib/auth";
 import { generateBatchId, generateCertificateId } from "@/lib/certificateIds";
 import { sendCertificateEmail } from "@/lib/certificateEmail";
 import {
+  FileValidationError,
   validateTemplateFile,
   validateDatasetFile,
   validateRowCount,
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     const templateErr = validateTemplateFile(templateFile);
-    if (templateErr) {
+    if (templateErr instanceof FileValidationError) {
       return NextResponse.json(
         { error: templateErr.message },
         { status: templateErr.status },
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
     }
 
     const datasetErr = validateDatasetFile(datasetFile);
-    if (datasetErr) {
+    if (datasetErr instanceof FileValidationError) {
       return NextResponse.json(
         { error: datasetErr.message },
         { status: datasetErr.status },
@@ -242,7 +243,7 @@ export async function POST(req: NextRequest) {
     }
 
     const rowCountErr = validateRowCount(rows.length);
-    if (rowCountErr) {
+    if (rowCountErr instanceof FileValidationError) {
       return NextResponse.json(
         { error: rowCountErr.message },
         { status: rowCountErr.status },

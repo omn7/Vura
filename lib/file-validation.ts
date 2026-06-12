@@ -11,31 +11,33 @@ export const FILE_LIMITS = {
   },
 } as const;
 
-export type FileValidationError = {
+export class FileValidationError extends Error {
   field: string;
-  message: string;
   status: number;
-};
+
+  constructor(field: string, message: string, status: number) {
+    super(message);
+    this.name = "FileValidationError";
+    this.field = field;
+    this.status = status;
+  }
+}
 
 export function validateTemplateFile(file: File | null): FileValidationError | null {
   if (!file) {
-    return { field: "template", message: "Template file is required.", status: 400 };
+    return new FileValidationError("template", "Template file is required.", 400);
   }
 
   if (file.size > FILE_LIMITS.template.maxSize) {
-    return {
-      field: "template",
-      message: `Template file exceeds the maximum size of ${FILE_LIMITS.template.maxSize / (1024 * 1024)} MB.`,
-      status: 413,
-    };
+    return new FileValidationError(
+      "template",
+      `Template file exceeds the maximum size of ${FILE_LIMITS.template.maxSize / (1024 * 1024)} MB.`,
+      413,
+    );
   }
 
   if (!file.name.toLowerCase().endsWith(".pdf")) {
-    return {
-      field: "template",
-      message: "Template must be a PDF file.",
-      status: 400,
-    };
+    return new FileValidationError("template", "Template must be a PDF file.", 400);
   }
 
   return null;
@@ -43,24 +45,24 @@ export function validateTemplateFile(file: File | null): FileValidationError | n
 
 export function validateDatasetFile(file: File | null): FileValidationError | null {
   if (!file) {
-    return { field: "dataset", message: "Dataset file is required.", status: 400 };
+    return new FileValidationError("dataset", "Dataset file is required.", 400);
   }
 
   if (file.size > FILE_LIMITS.dataset.maxSize) {
-    return {
-      field: "dataset",
-      message: `Dataset file exceeds the maximum size of ${FILE_LIMITS.dataset.maxSize / (1024 * 1024)} MB.`,
-      status: 413,
-    };
+    return new FileValidationError(
+      "dataset",
+      `Dataset file exceeds the maximum size of ${FILE_LIMITS.dataset.maxSize / (1024 * 1024)} MB.`,
+      413,
+    );
   }
 
   const ext = "." + file.name.split(".").pop()?.toLowerCase();
   if (!FILE_LIMITS.dataset.allowedExtensions.includes(ext as any)) {
-    return {
-      field: "dataset",
-      message: `Dataset must be an Excel file (${FILE_LIMITS.dataset.allowedExtensions.join(", ")}).`,
-      status: 400,
-    };
+    return new FileValidationError(
+      "dataset",
+      `Dataset must be an Excel file (${FILE_LIMITS.dataset.allowedExtensions.join(", ")}).`,
+      400,
+    );
   }
 
   return null;
@@ -68,11 +70,11 @@ export function validateDatasetFile(file: File | null): FileValidationError | nu
 
 export function validateRowCount(rows: number): FileValidationError | null {
   if (rows > FILE_LIMITS.dataset.maxRows) {
-    return {
-      field: "dataset",
-      message: `Dataset exceeds the maximum of ${FILE_LIMITS.dataset.maxRows} rows. Found ${rows} rows.`,
-      status: 400,
-    };
+    return new FileValidationError(
+      "dataset",
+      `Dataset exceeds the maximum of ${FILE_LIMITS.dataset.maxRows} rows. Found ${rows} rows.`,
+      400,
+    );
   }
   return null;
 }
