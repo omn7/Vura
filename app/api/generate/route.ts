@@ -289,11 +289,11 @@ export async function POST(req: NextRequest) {
         : null;
 
       const certData = {
-        name: String(normalizedRow.name || "Unknown"),
-        course: String(normalizedRow.course || (!needsCourse ? "" : "Unknown")),
+        name: String(normalizedRow.name || "Unknown").trim() || "Unknown",
+        course: String(normalizedRow.course || (!needsCourse ? "" : "Unknown")).trim(),
         issueDate: String(
           normalizedRow.issuedate || (!needsIssueDate ? "" : "Unknown"),
-        ),
+        ).trim(),
         certificateId,
       };
 
