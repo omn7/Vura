@@ -191,10 +191,10 @@ export async function sendCertificateEmail({
     theme = "formal",
     course = "Course/Event"
 }: SendCertificateEmailInput): Promise<boolean> {
-    // Replace localhost urls with vura.vercel.app in verification emails
+    // Replace localhost urls with vurakit.in in verification emails
     let finalVerifyUrl = verifyUrl;
     if (verifyUrl.includes("localhost") || verifyUrl.includes("127.0.0.1")) {
-        finalVerifyUrl = verifyUrl.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, "https://vura.vercel.app");
+        finalVerifyUrl = verifyUrl.replace(/https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, "https://vurakit.in");
     }
 
     const placeholderData = {
