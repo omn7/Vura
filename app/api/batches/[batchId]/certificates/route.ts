@@ -3,7 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
-import { parsePaginationParams, getPaginationMetadata, calculateSkip } from "@/lib/pagination";
+import {
+    parsePaginationParams,
+    getPaginationMetadata,
+    calculateSkip,
+} from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +19,22 @@ const searchParamsSchema = z.object({
             return String(val).toLowerCase();
         },
         z.enum(["pending", "sent", "failed", "generated", "revoked"]).optional()
+    ),
+    page: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const parsed = parseInt(String(val), 10);
+            return isNaN(parsed) ? undefined : parsed;
+        },
+        z.number().int().positive().optional()
+    ),
+    limit: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const parsed = parseInt(String(val), 10);
+            return isNaN(parsed) ? undefined : parsed;
+        },
+        z.number().int().positive().optional()
     ),
 });
 
@@ -92,3 +112,4 @@ export async function GET(req: NextRequest, context: { params: Promise<{ batchId
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
+
