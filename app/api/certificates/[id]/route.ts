@@ -16,21 +16,27 @@ export async function DELETE(
 
     const { id } = await context.params;
 
-    // Ensure the certificate belongs to the requesting user
-    const cert = await prisma.certificate.findUnique({
-        where: { certificateId: id },
-        select: { userId: true },
-    });
+    try {
+        // Ensure the certificate belongs to the requesting user
+        const cert = await prisma.certificate.findUnique({
+            where: { certificateId: id },
+            select: { userId: true },
+        });
 
-    if (!cert) {
-        return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
+        if (!cert) {
+            return NextResponse.json({ error: "Certificate not found." }, { status: 404 });
+        }
+
+        if (cert.userId !== session.user.id) {
+            return NextResponse.json({ error: "You do not own this certificate." }, { status: 403 });
+        }
+
+        await prisma.certificate.delete({ where: { certificateId: id } });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error(`Failed to delete certificate ${id}:`, error);
+        // More granular error handling could be added, e.g., if ID is malformed or DB connection issues
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
-
-    if (cert.userId !== session.user.id) {
-        return NextResponse.json({ error: "You do not own this certificate." }, { status: 403 });
-    }
-
-    await prisma.certificate.delete({ where: { certificateId: id } });
-
-    return NextResponse.json({ success: true });
 }

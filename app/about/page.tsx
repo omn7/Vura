@@ -40,7 +40,7 @@ export default function AboutPage() {
                         <ul className="space-y-3 text-sm text-gray-300">
                             <li><strong className="text-white">Run Time:</strong> Node.js & Next.js API Routes (Serverless)</li>
                             <li><strong className="text-white">PDF Generation:</strong> `pdf-lib` for reading template geometries, embedding custom fonts, and writing text to exact coordinates based on user X/Y mapping.</li>
-                            <li><strong className="text-white">Data Parsing:</strong> `xlsx` library to instantly read uploaded Excel sheets and map rows to certificate iterations.</li>
+                            <li><strong className="text-white">Data Parsing:</strong> `xlsx` library to instantly read uploaded Excel or CSV sheets and map rows to certificate iterations.</li>
                         </ul>
                     </div>
 

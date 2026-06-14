@@ -1,0 +1,75 @@
+name: Thank Past Contributors
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  thank-past-contributors:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Thank all past contributors
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Fetch all closed PRs (paginated)
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'closed',
+              sort: 'updated',
+              direction: 'desc',
+              per_page: 100
+            });
+
+            // Filter for merged PRs not by omn7
+            const mergedPRs = prs.filter(pr => pr.merged_at && pr.user && pr.user.login !== 'omn7');
+
+            console.log(`Found ${mergedPRs.length} merged PRs to thank contributors for`);
+
+            const commentLines = [
+              "Thank you so much for contributing to Vura! 🙏 Your efforts are greatly appreciated and help make this project better.",
+              "",
+              "If you'd like to download your contribution certificate and view your profile, please visit:",
+              "https://vurakit.in/contributor",
+              "",
+              "We're grateful for your support!"
+            ];
+            const commentBody = commentLines.join("\n");
+
+            for (const pr of mergedPRs) {
+              // Check for an existing thank-you comment to avoid duplicates
+              const { data: comments } = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pr.number,
+              });
+
+              const alreadyCommented = comments.some(c =>
+                c.body && c.body.includes('Thank you so much for contributing to Vura')
+              );
+
+              if (!alreadyCommented) {
+                try {
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: pr.number,
+                    body: commentBody
+                  });
+                  console.log(`✓ Thanked contributor on PR #${pr.number} (${pr.user.login})`);
+                } catch (error) {
+                  console.log(`✗ Failed to comment on PR #${pr.number}: ${error.message}`);
+                }
+              } else {
+                console.log(`⊘ PR #${pr.number} already has thank you comment`);
+              }
+            }
+
+            console.log('Completed thanking all past contributors!');

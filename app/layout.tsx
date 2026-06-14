@@ -9,6 +9,7 @@ const jakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://vurakit.in'),
   title: 'Vura - Bulk Certificate Generation Platform',
   description: 'Automate Certificate Generation at Scale. Create, distribute, and verify certificates with ease with unique QR codes and API access.',
   keywords: ['Certificate Generator', 'Bulk Certificates', 'Next.js', 'API Integration', 'Automated PDF Generation', 'Secure Verification'],
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://vurakit.vercel.app',
+    url: 'https://vurakit.in',
     title: 'Vura | Automate Certificate Generation at Scale',
     description: 'Bulk-generate verifiable certificates in seconds via Excel or API. Secure, QR-powered, and high-performance.',
     siteName: 'Vura',
@@ -39,6 +40,17 @@ export const metadata: Metadata = {
   icons: {
     icon: '/vuralogo.png',
     apple: '/vuralogo.png',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 }
 

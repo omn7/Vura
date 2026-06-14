@@ -2,14 +2,23 @@ import prisma from "@/lib/prisma"
 import { CheckCircle2, XCircle, ExternalLink, Calendar, GraduationCap, User, ShieldCheck, Hash, Download} from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
 
 export default async function VerifyPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
     const id = params.id;
 
+    // Sanitize the ID before using it in the query, although Prisma parameterized queries protect against SQL injection.
+    // This ensures only expected characters are passed to the database, preventing potential edge cases or logging issues.
+    const sanitizedId = DOMPurify.sanitize(id, { USE_PROFILES: { html: false } });
+    // Additionally, enforce expected format if applicable, e.g., regex check for "CERT-XXXX"
+
     const certificate = await prisma.certificate.findUnique({
-        where: { certificateId: id }
+        where: { certificateId: sanitizedId }
     });
+
+    // Helper to safely render strings from certificate data
+    const renderSafeString = (value: string) => DOMPurify.sanitize(value, { USE_PROFILES: { html: false } });
 
     if (!certificate) {
         return (
@@ -44,7 +53,7 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
                         </p>
 
                         <div className="bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] rounded-xl p-3 mb-6 font-mono text-sm text-[var(--color-neon-muted)] text-center">
-                            {id}
+                            {renderSafeString(id)}
                         </div>
 
                         <Link href="/" className="btn-secondary w-full flex items-center justify-center text-sm">Go Back to Vura</Link>
@@ -89,17 +98,17 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
                         <div className="badge-valid mb-3">✓ Valid Certificate</div>
                         <h1 className="text-2xl font-bold text-white mb-2">Authenticity Confirmed</h1>
                         <span className="font-mono text-xs text-[var(--color-neon-muted)] bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] px-4 py-1.5 rounded-full">
-                            {certificate.certificateId}
+                            {renderSafeString(certificate.certificateId)}
                         </span>
                     </div>
 
                     {/* Detail rows */}
                     <div className="space-y-1 mb-7">
-                        {[
-                            { icon: User, label: "Recipient Name", value: certificate.name },
-                            { icon: GraduationCap, label: "Course / Certification", value: certificate.course },
-                            { icon: Calendar, label: "Date of Issue", value: certificate.issueDate },
-                            { icon: Hash, label: "Certificate ID", value: certificate.certificateId, mono: true },
+                        {[ 
+                            { icon: User, label: "Recipient Name", value: renderSafeString(certificate.name) },
+                            { icon: GraduationCap, label: "Course / Certification", value: renderSafeString(certificate.course) },
+                            { icon: Calendar, label: "Date of Issue", value: renderSafeString(certificate.issueDate) },
+                            { icon: Hash, label: "Certificate ID", value: renderSafeString(certificate.certificateId), mono: true },
                         ].map(({ icon: Icon, label, value, mono }) => (
                             <div key={label} className="flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-[var(--color-neon-surface-hover)] transition-colors group">
                                 <div className="w-9 h-9 rounded-lg bg-[var(--color-neon-primary)]/08 border border-[var(--color-neon-primary)]/15 flex items-center justify-center shrink-0 group-hover:border-[var(--color-neon-primary)]/30 transition-all">
@@ -117,7 +126,7 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
                     <div className="flex flex-col sm:flex-row gap-3">
                         {/* View PDF */}
                         <a
-                            href={certificate.pdfUrl}
+                            href={renderSafeString(certificate.pdfUrl)}
                             target="_blank"
                             rel="noreferrer"
                             className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-bold text-black bg-[var(--color-neon-primary)] rounded-xl transition-all hover:bg-[#00ffaa] shadow-[0_0_20px_rgba(0,229,153,0.3)] hover:shadow-[0_0_30px_rgba(0,229,153,0.5)]"
@@ -128,7 +137,7 @@ export default async function VerifyPage(props: { params: Promise<{ id: string }
 
                         {/* Download PDF */}
                         <a
-                            href={certificate.pdfUrl}
+                            href={renderSafeString(certificate.pdfUrl)}
                             download
                             className="flex-1 flex items-center justify-center gap-2 py-4 text-sm font-bold text-white border border-[var(--color-neon-primary)]/30 rounded-xl hover:bg-[var(--color-neon-primary)]/10 transition-all"
                         >

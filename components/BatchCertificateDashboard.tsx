@@ -52,6 +52,15 @@ function getStatusLabel(status: CertificateStatus) {
     return status;
 }
 
+type PaginationMeta = {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+};
+
 export default function BatchCertificateDashboard({ batchId }: Props) {
     const [records, setRecords] = useState<CertificateRecord[]>([]);
     const [loading, setLoading] = useState(true);
@@ -61,8 +70,14 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
     const [retryingId, setRetryingId] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [refreshTick, setRefreshTick] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState<PaginationMeta | null>(null);
 
     const deferredSearch = useDeferredValue(search);
+
+    useEffect(() => {
+        setPage(1);
+    }, [status, deferredSearch]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -75,6 +90,7 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
                 const params = new URLSearchParams();
                 if (status) params.set("status", status);
                 if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
+                params.set("page", String(page));
 
                 const response = await fetch(`/api/batches/${batchId}/certificates?${params.toString()}`, {
                     signal: controller.signal,
@@ -85,8 +101,9 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
                     throw new Error(payload?.error || "Failed to load batch certificates.");
                 }
 
-                const data = await response.json();
-                setRecords(Array.isArray(data) ? data : []);
+                const json = await response.json();
+                setRecords(Array.isArray(json.data) ? json.data : []);
+                setPagination(json.pagination ?? null);
             } catch (loadError) {
                 if (controller.signal.aborted) return;
                 setError(loadError instanceof Error ? loadError.message : "Failed to load batch certificates.");
@@ -101,7 +118,7 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
         loadCertificates();
 
         return () => controller.abort();
-    }, [batchId, status, deferredSearch, refreshTick]);
+    }, [batchId, status, deferredSearch, refreshTick, page]);
 
     const totals = useMemo(() => {
         return records.reduce(
@@ -374,6 +391,32 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
                     </>
                 )}
             </div>
+
+            {pagination && pagination.totalPages > 1 ? (
+                <div className="flex items-center justify-between text-sm text-[var(--color-neon-muted)]">
+                    <span>
+                        Page {pagination.page} of {pagination.totalPages} &mdash; {pagination.total} total
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            disabled={!pagination.hasPreviousPage}
+                            onClick={() => setPage((p) => p - 1)}
+                            className="rounded-lg border border-[var(--color-neon-border)] px-3 py-1.5 text-xs transition-colors hover:border-[var(--color-neon-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            type="button"
+                            disabled={!pagination.hasNextPage}
+                            onClick={() => setPage((p) => p + 1)}
+                            className="rounded-lg border border-[var(--color-neon-border)] px-3 py-1.5 text-xs transition-colors hover:border-[var(--color-neon-primary)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 }

@@ -4,6 +4,7 @@ import { generateCertificate } from "@/lib/generateCertificate";
 import { uploadToS3 } from "@/lib/s3";
 import { generateCertificateId } from "@/lib/certificateIds";
 import { sendCertificateEmail } from "@/lib/certificateEmail";
+import { safeFetch } from "@/lib/url-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -85,10 +86,13 @@ export async function POST(req: NextRequest) {
         },
     });
 
-    // ── 4. Fetch the PDF template ────────────────────────────────────────
+    // ── 4. Validate and fetch the PDF template ────────────────────────────
+    // safeFetch validates the URL (scheme, hostname, resolved IPs) at every
+    // hop and follows redirects manually so a public URL cannot redirect to
+    // an internal host or cloud metadata endpoint.
     let templateBuffer: ArrayBuffer;
     try {
-        const templateRes = await fetch(templateUrl);
+        const templateRes = await safeFetch(templateUrl);
         if (!templateRes.ok) {
             await prisma.certificate.update({
                 where: { certificateId },
@@ -96,7 +100,7 @@ export async function POST(req: NextRequest) {
             });
             return NextResponse.json(
                 { error: `Failed to fetch templateUrl (HTTP ${templateRes.status}). Make sure the URL is publicly accessible.` },
-                { status: 422, headers: corsHeaders }
+                { status: 400, headers: corsHeaders }
             );
         }
         templateBuffer = await templateRes.arrayBuffer();
@@ -107,14 +111,14 @@ export async function POST(req: NextRequest) {
             data: { status: "failed", failureReason: message },
         });
         return NextResponse.json(
-            { error: "Could not reach templateUrl. Ensure it is a valid, publicly accessible PDF URL." },
-            { status: 422, headers: corsHeaders }
+            { error: message },
+            { status: 400, headers: corsHeaders }
         );
     }
 
     // ── 5. Generate the certificate PDF ─────────────────────────────────
     const protocol = req.headers.get("x-forwarded-proto") ?? "https";
-    const host = req.headers.get("host") ?? "vurakit.vercel.app";
+    const host = req.headers.get("host") ?? "vurakit.in";
     const baseUrl = `${protocol}://${host}`;
 
     const certData = {

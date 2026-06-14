@@ -6,35 +6,47 @@ import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
 
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const registered = searchParams.get("registered");
-    const authError = searchParams.get("error"); // next-auth appends this on failure
+    // Sanitize authError to prevent XSS if Next.js doesn't escape it by default
+    const rawAuthError = searchParams.get("error");
+    const sanitizedAuthError = rawAuthError ? DOMPurify.sanitize(rawAuthError, { USE_PROFILES: { html: false } }) : null;
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(authError === "CredentialsSignin" ? "Invalid email or password" : "");
+    const [error, setError] = useState(
+        sanitizedAuthError === "CredentialsSignin" ? "Invalid email or password" : ""
+    );
 
     const handleCredentialsLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
 
-        const res = await signIn("credentials", {
-            redirect: false,
-            email,
-            password,
-        });
+        try {
+            const res = await signIn("credentials", {
+                redirect: false,
+                email,
+                password,
+            });
 
-        if (res?.error) {
-            setError("Invalid email or password");
+            if (res?.error) {
+                // Use a generic error message to prevent leaking specific credential validation info
+                setError("Invalid email or password");
+            } else {
+                router.push("/dashboard"); // Redirect to /dashboard after successful login
+                router.refresh();
+            }
+        } catch (opError) {
+            console.error("Login operation failed:", opError);
+            setError("An unexpected error occurred. Please try again.");
+        } finally {
             setLoading(false);
-        } else {
-            router.push("/app");
-            router.refresh();
         }
     };
 
@@ -59,7 +71,7 @@ function LoginContent() {
                     </div>
                 )}
 
-                {error && (
+                {error && ( // Display sanitized error message
                     <div className="w-full mb-6 p-4 rounded-xl bg-red-900/20 border border-red-500/50 flex items-start text-red-200">
                         <AlertCircle className="w-5 h-5 mr-3 shrink-0 mt-0.5 text-red-400" />
                         <p className="text-sm text-left">{error}</p>
@@ -108,7 +120,7 @@ function LoginContent() {
                 </div>
 
                 <button
-                    onClick={() => signIn("google", { callbackUrl: "/app" })}
+                    onClick={() => signIn("google", { callbackUrl: "/dashboard" })} // Redirect to /dashboard after Google login
                     className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 px-6 rounded-xl font-semibold hover:bg-gray-200 transition-colors shadow-lg"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
