@@ -2,8 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { z } from "zod";
+import {
+    parsePaginationParams,
+    getPaginationMetadata,
+    calculateSkip,
+} from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
+
+const searchParamsSchema = z.object({
+    search: z.string().trim().nullable().optional(),
+    status: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            return String(val).toLowerCase();
+        },
+        z.enum(["pending", "sent", "failed", "generated", "revoked"]).optional()
+    ),
+    page: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const parsed = parseInt(String(val), 10);
+            return isNaN(parsed) ? undefined : parsed;
+        },
+        z.number().int().positive().optional()
+    ),
+    limit: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const parsed = parseInt(String(val), 10);
+            return isNaN(parsed) ? undefined : parsed;
+        },
+        z.number().int().positive().optional()
+    ),
+});
 
 export async function GET(req: NextRequest, context: { params: Promise<{ batchId: string }> }) {
     const session = await getServerSession(authOptions);
@@ -12,41 +45,71 @@ export async function GET(req: NextRequest, context: { params: Promise<{ batchId
     }
 
     const { batchId } = await context.params;
-    const searchParams = new URL(req.url).searchParams;
-    const search = (searchParams.get("search") ?? "").trim();
-    const status = (searchParams.get("status") ?? "").trim();
+    const url = new URL(req.url);
 
-    const certificates = await prisma.certificate.findMany({
-        where: {
-            batchId,
-            userId: session.user.id,
-            ...(status ? { status } : {}),
-            ...(search
-                ? {
-                      OR: [
-                          { name: { contains: search, mode: "insensitive" } },
-                          { recipientEmail: { contains: search, mode: "insensitive" } },
-                          { certificateId: { contains: search, mode: "insensitive" } },
-                      ],
-                  }
-                : {}),
-        },
-        orderBy: { updatedAt: "desc" },
-        select: {
-            id: true,
-            certificateId: true,
-            name: true,
-            recipientEmail: true,
-            course: true,
-            issueDate: true,
-            pdfUrl: true,
-            status: true,
-            failureReason: true,
-            updatedAt: true,
-            sentAt: true,
-            batchId: true,
-        },
+    const parsedSearchParams = searchParamsSchema.safeParse({
+        search: url.searchParams.get("search"),
+        status: url.searchParams.get("status"),
+        page: url.searchParams.get("page"),
+        limit: url.searchParams.get("limit"),
     });
 
-    return NextResponse.json(certificates, { status: 200 });
+    if (!parsedSearchParams.success) {
+        return NextResponse.json({ error: "Invalid search parameters", details: parsedSearchParams.error.flatten() }, { status: 400 });
+    }
+
+    const { search, status, page: pageParam, limit: limitParam } = parsedSearchParams.data;
+
+    const { page, limit } = parsePaginationParams(pageParam, limitParam);
+    const skip = calculateSkip(page, limit);
+
+    const whereCondition = {
+        batchId,
+        userId: session.user.id,
+        ...(status ? { status } : {}),
+        ...(search
+            ? {
+                  OR: [
+                      { name: { contains: search, mode: "insensitive" as const } },
+                      { recipientEmail: { contains: search, mode: "insensitive" as const } },
+                      { certificateId: { contains: search, mode: "insensitive" as const } },
+                  ],
+              }
+            : {}),
+    };
+
+    try {
+        const [total, certificates] = await Promise.all([
+            prisma.certificate.count({ where: whereCondition }),
+            prisma.certificate.findMany({
+                where: whereCondition,
+                orderBy: { updatedAt: "desc" },
+                select: {
+                    id: true,
+                    certificateId: true,
+                    name: true,
+                    recipientEmail: true,
+                    course: true,
+                    issueDate: true,
+                    pdfUrl: true,
+                    status: true,
+                    failureReason: true,
+                    updatedAt: true,
+                    sentAt: true,
+                    batchId: true,
+                },
+                skip,
+                take: limit,
+            }),
+        ]);
+
+        return NextResponse.json({
+            data: certificates,
+            pagination: getPaginationMetadata(page, limit, total),
+        });
+    } catch (error) {
+        console.error("Failed to fetch certificates:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
 }
+

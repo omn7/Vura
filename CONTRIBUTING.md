@@ -1,8 +1,11 @@
-# 🚀 Welcoming All Vura Contributors!
+# 🚀 Welcoming All Vura Contributors !
 
 Thank you for your interest in contributing to **Vura**—our open-source SaaS platform designed for high-performance, bulk certificate generation and verification. 
 
 Vura is an official project for **GirlScript Summer of Code (GSSoC) 2026**. This one-page document contains everything you need to set up your environment, follow our UI guidelines, and successfully get your Pull Requests merged.
+
+**Contributor Recognition**: We value your effort! Once your Pull Request is successfully merged into the repository, your name will be featured on our Contributor Wall, and you will be issued a digital certificate of contribution for your work on Vura.
+https://vurakit.in/contributor
 
 ---
 

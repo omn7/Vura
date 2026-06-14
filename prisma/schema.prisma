@@ -23,13 +23,15 @@ model Certificate {
   status        String   @default("pending")
   failureReason String?
   sentAt        DateTime?
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
   revoked       Boolean  @default(false)
   createdAt     DateTime @default(now())
 
   // Relation to User
   user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String?
+
+  emailQueue    EmailQueue?
 
   @@index([batchId])
   @@index([status])
@@ -121,3 +123,35 @@ model Template {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model ComposeSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  batchId   String
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model EmailQueue {
+  id             String      @id @default(cuid())
+  certificateId  String      @unique
+  certificate    Certificate @relation(fields: [certificateId], references: [certificateId], onDelete: Cascade)
+  recipientEmail String
+  recipientName  String
+  subject        String
+  cc             String?
+  body           String
+  theme          String      @default("formal")
+  status         String      @default("pending") // "pending" | "processing" | "sent" | "failed"
+  attempts       Int         @default(0)
+  lastAttempt    DateTime?
+  error          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  userId         String
+
+  @@index([status])
+  @@index([userId])
+}
+

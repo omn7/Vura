@@ -6,71 +6,47 @@ import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-
-const AUTH_ERROR_MESSAGES: Record<string, string> = {
-    CredentialsSignin: "Invalid email or password",
-    "User not found": "No account exists with that email address.",
-    "Invalid password": "The password you entered is incorrect.",
-    "Too many failed login attempts. Please try again later.": "Too many failed login attempts. Please try again later.",
-    "This account uses Google sign-in. Please continue with Google.": "This account was created with Google. Continue with Google sign-in.",
-    OAuthSignin: "Google sign-in failed. Check your OAuth client credentials and redirect URI.",
-    OAuthCallback: "Google sign-in failed during callback. Verify NEXTAUTH_URL and your Google OAuth redirect URI.",
-    OAuthAccountNotLinked: "This account is already linked to another sign-in method.",
-    AccessDenied: "Access to Google sign-in was denied.",
-    Configuration: "Authentication is not configured correctly. Check GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and NEXTAUTH_SECRET.",
-}
-
-const getAppCallbackUrl = () => {
-    if (typeof window === "undefined") {
-        return "/app";
-    }
-
-    return new URL("/app", window.location.origin).toString();
-}
+import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
 
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const registered = searchParams.get("registered");
-    const authError = searchParams.get("error"); // next-auth appends this on failure
+    // Sanitize authError to prevent XSS if Next.js doesn't escape it by default
+    const rawAuthError = searchParams.get("error");
+    const sanitizedAuthError = rawAuthError ? DOMPurify.sanitize(rawAuthError, { USE_PROFILES: { html: false } }) : null;
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(authError ? AUTH_ERROR_MESSAGES[authError] || "Sign in failed." : "");
+    const [error, setError] = useState(
+        sanitizedAuthError === "CredentialsSignin" ? "Invalid email or password" : ""
+    );
 
     const handleCredentialsLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
 
-        const res = await signIn("credentials", {
-            redirect: false,
-            email,
-            password,
-        });
-
-        if (!res?.ok || res?.error) {
-            setError(res?.error ? (AUTH_ERROR_MESSAGES[res.error as keyof typeof AUTH_ERROR_MESSAGES] || "Invalid email or password") : "Invalid email or password");
-        if (!res?.ok || res.error) {
-            const errorKey = res?.error ?? "";
-            setError(AUTH_ERROR_MESSAGES[errorKey] || "Invalid email or password");
-            setLoading(false);
-            return;
-        } else {
-            router.push("/app");
-            router.refresh();
-        }
-    };
-
-    const handleGoogleLogin = async () => {
-        setError("");
-
         try {
-            await signIn("google", { callbackUrl: getAppCallbackUrl() });
-        } catch (err) {
-            console.error("Google sign-in failed:", err);
-            setError("Google sign-in failed. Check the provider configuration and environment variables.");
+            const res = await signIn("credentials", {
+                redirect: false,
+                email,
+                password,
+            });
+
+            if (res?.error) {
+                // Use a generic error message to prevent leaking specific credential validation info
+                setError("Invalid email or password");
+            } else {
+                router.push("/dashboard"); // Redirect to /dashboard after successful login
+                router.refresh();
+            }
+        } catch (opError) {
+            console.error("Login operation failed:", opError);
+            setError("An unexpected error occurred. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -80,14 +56,7 @@ function LoginContent() {
 
             <div className="w-full max-w-md glass-card p-10 flex flex-col items-center text-center relative z-10 shadow-2xl">
                 <Link href="/" className="text-[var(--color-neon-primary)] font-bold text-2xl mb-8 tracking-widest uppercase flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <Image
-                        src="/vuralogo.png"
-                        alt="Vura Logo"
-                        width={32}
-                        height={32}
-                        style={{ width: "auto", height: "auto" }}
-                        className="rounded-lg object-contain"
-                    />
+                    <Image src="/vuralogo.png" alt="Vura Logo" width={32} height={32} className="rounded-lg object-contain" />
                     Vura
                 </Link>
 
@@ -102,7 +71,7 @@ function LoginContent() {
                     </div>
                 )}
 
-                {error && (
+                {error && ( // Display sanitized error message
                     <div className="w-full mb-6 p-4 rounded-xl bg-red-900/20 border border-red-500/50 flex items-start text-red-200">
                         <AlertCircle className="w-5 h-5 mr-3 shrink-0 mt-0.5 text-red-400" />
                         <p className="text-sm text-left">{error}</p>
@@ -114,10 +83,6 @@ function LoginContent() {
                         <label className="text-xs text-[var(--color-neon-muted)] ml-1">Email Address</label>
                         <input
                             type="email"
-                            name="email"
-                            autoComplete="email"
-                            autoCapitalize="none"
-                            spellCheck={false}
                             required
                             value={email}
                             onChange={e => setEmail(e.target.value)}
@@ -132,8 +97,6 @@ function LoginContent() {
                         </div>
                         <input
                             type="password"
-                            name="password"
-                            autoComplete="current-password"
                             required
                             value={password}
                             onChange={e => setPassword(e.target.value)}
@@ -157,8 +120,7 @@ function LoginContent() {
                 </div>
 
                 <button
-                    type="button"
-                    onClick={handleGoogleLogin}
+                    onClick={() => signIn("google", { callbackUrl: "/dashboard" })} // Redirect to /dashboard after Google login
                     className="w-full flex items-center justify-center gap-3 bg-white text-black py-3 px-6 rounded-xl font-semibold hover:bg-gray-200 transition-colors shadow-lg"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

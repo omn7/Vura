@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { ZodError } from "zod";
-import { validateRegister } from "@/lib/validation/auth";
 import { registerSchema } from "@/lib/validations";
 import {
     AUTH_RATE_LIMIT_MESSAGE,
-    clearFailedAttempts,
     getRateLimitKey,
     getRetryAfterHeaders,
     isBlocked,
     recordFailedAttempt,
 } from "@/lib/rate-limit";
-
-export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
     try {
@@ -31,9 +26,7 @@ export async function POST(req: Request) {
 
         if (blockStatus.blocked) {
             return NextResponse.json(
-                {
-                    message: AUTH_RATE_LIMIT_MESSAGE,
-                },
+                { message: AUTH_RATE_LIMIT_MESSAGE },
                 {
                     status: 429,
                     headers: getRetryAfterHeaders(
@@ -43,97 +36,47 @@ export async function POST(req: Request) {
             );
         }
 
-        try {
-            validateRegister(body);
-        } catch (err) {
-            if (err instanceof ZodError) {
-                return NextResponse.json(
-                    {
-                        message: "Invalid input",
-                        errors: err.issues,
-                    },
-                    { status: 400 }
-                );
-            }
-
-            throw err;
-        }
-
         const parsed = registerSchema.safeParse(body);
 
         if (!parsed.success) {
             recordFailedAttempt(rateLimitKey);
-
             const error = parsed.error.issues[0].message;
-
-            return NextResponse.json(
-                { error },
-                { status: 400 }
-            );
+            return NextResponse.json({ error }, { status: 400 });
         }
 
-        const {
-            email: rawEmail,
-            password,
-            name,
-        } = parsed.data;
+        const { name, email, password } = parsed.data;
+        const normalizedEmail = email.toLowerCase();
 
-        const email = rawEmail.toLowerCase();
-
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
+        const existing = await prisma.user.findUnique({
+            where: { email: normalizedEmail },
         });
 
-        if (existingUser) {
-            recordFailedAttempt(rateLimitKey);
-
+        if (existing) {
             return NextResponse.json(
-                {
-                    message:
-                        "User with this email already exists",
-                },
+                { error: "An account with this email already exists" },
                 { status: 409 }
             );
         }
 
-        const hashedPassword = await bcrypt.hash(
-            password,
-            10
-        );
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = await prisma.user.create({
+        await prisma.user.create({
             data: {
-                email,
                 name,
+                email: normalizedEmail,
                 password: hashedPassword,
             },
         });
 
-        const {
-            password: _,
-            ...userWithoutPassword
-        } = newUser;
-
-        clearFailedAttempts(rateLimitKey);
-
         return NextResponse.json(
-            {
-                user: userWithoutPassword,
-                message: "User created successfully",
-            },
+            { message: "Account created successfully" },
             { status: 201 }
         );
     } catch (error) {
         console.error("Registration error:", error);
-        const message = error instanceof Error ? error.message : "";
-
-        if (/DATABASE_URL|PrismaClientInitializationError|Can't reach database server|Invalid datasource URL/i.test(message)) {
-            return NextResponse.json(
-                { message: "Database is not configured correctly. Check DATABASE_URL and your Prisma connection." },
-                { status: 500 }
-            );
-        }
-
-        return NextResponse.json({ message: "Something went wrong" }, { status: 500 });
+        return NextResponse.json(
+            { message: "Something went wrong" },
+            { status: 500 }
+        );
     }
 }
