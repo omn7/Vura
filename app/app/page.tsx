@@ -13,7 +13,7 @@ import {
   LogOut,
   Home,
   Github,
-  Twitter,
+  X,
   Linkedin,
   Mail,
   Download,
@@ -1477,7 +1477,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-4">
                 {[
                   { icon: Github, href: "https://github.com/omn7/Vura" },
-                  { icon: Twitter, href: "https://x.com/mr_codex" },
+                  { icon: X, href: "https://x.com/mr_codex" },
                   {
                     icon: Linkedin,
                     href: "https://linkedin.com/in/omnarkhede/",

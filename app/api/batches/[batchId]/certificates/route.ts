@@ -63,29 +63,27 @@ export async function GET(req: NextRequest, context: { params: Promise<{ batchId
     const { page, limit } = parsePaginationParams(pageParam, limitParam);
     const skip = calculateSkip(page, limit);
 
-    try {
-        const whereCondition = {
-            batchId,
-            userId: session.user.id,
-            ...(status ? { status } : {}),
-            ...(search
-                ? {
-                      OR: [
-                          { name: { contains: search, mode: "insensitive" as const } },
-                          { recipientEmail: { contains: search, mode: "insensitive" as const } },
-                          { certificateId: { contains: search, mode: "insensitive" as const } },
-                      ],
-                  }
-                : {}),
-        };
+    const whereCondition = {
+        batchId,
+        userId: session.user.id,
+        ...(status ? { status } : {}),
+        ...(search
+            ? {
+                  OR: [
+                      { name: { contains: search, mode: "insensitive" as const } },
+                      { recipientEmail: { contains: search, mode: "insensitive" as const } },
+                      { certificateId: { contains: search, mode: "insensitive" as const } },
+                  ],
+              }
+            : {}),
+    };
 
+    try {
         const [total, certificates] = await Promise.all([
             prisma.certificate.count({ where: whereCondition }),
             prisma.certificate.findMany({
                 where: whereCondition,
                 orderBy: { updatedAt: "desc" },
-                skip,
-                take: limit,
                 select: {
                     id: true,
                     certificateId: true,
@@ -100,14 +98,14 @@ export async function GET(req: NextRequest, context: { params: Promise<{ batchId
                     sentAt: true,
                     batchId: true,
                 },
+                skip,
+                take: limit,
             }),
         ]);
 
-        const paginationMetadata = getPaginationMetadata(page, limit, total);
-
         return NextResponse.json({
             data: certificates,
-            pagination: paginationMetadata,
+            pagination: getPaginationMetadata(page, limit, total),
         });
     } catch (error) {
         console.error("Failed to fetch certificates:", error);
