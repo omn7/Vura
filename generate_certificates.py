@@ -72,7 +72,7 @@ class CertificateGenerator:
         c.setFont("Helvetica-Oblique", 10)
         c.setFillColorRGB(0.5, 0.5, 0.5)
         c.drawString(40, 50, f"Verification ID: {cert_id}")
-        c.drawRightString(width - 40, 50, "Verify status securely online at: vura.vercel.app/verify")
+        c.drawRightString(width - 40, 50, "Verify status securely online at: vurakit.in/verify")
         
         c.setStrokeColorRGB(0.5, 0.5, 0.5)
         c.rect(width - 90, 70, 50, 50)
