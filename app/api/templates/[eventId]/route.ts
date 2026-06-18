@@ -87,7 +87,7 @@ export async function DELETE(
       where: { eventId },
     })
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    return new NextResponse(null, { status: 204 })
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
