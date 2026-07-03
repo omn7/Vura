@@ -6,15 +6,13 @@ import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import DOMPurify from 'dompurify'; // Import DOMPurify for sanitization
-
 function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const registered = searchParams.get("registered");
     // Sanitize authError to prevent XSS if Next.js doesn't escape it by default
     const rawAuthError = searchParams.get("error");
-    const sanitizedAuthError = rawAuthError ? DOMPurify.sanitize(rawAuthError, { USE_PROFILES: { html: false } }) : null;
+    const sanitizedAuthError = rawAuthError ? rawAuthError.replace(/[^a-zA-Z0-9]/g, "") : null;
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");

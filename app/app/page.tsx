@@ -95,6 +95,9 @@ export default function Dashboard() {
     EMAIL_TEMPLATES.formal.body,
   );
   const [inspectingDataset, setInspectingDataset] = useState(false);
+ const [showPreviewModal, setShowPreviewModal] = useState(false);
+const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated" && saveToDb === false) {
@@ -259,6 +262,43 @@ export default function Dashboard() {
     // Clear active target after click
     setActiveTarget(null);
   };
+
+  const handlePreview = async () => {
+  if (!pdfFile || !excelFile) {
+    setError("Please upload both a PDF template and an Excel dataset.");
+    return;
+  }
+
+  setPreviewLoading(true);
+  setError(null);
+
+  const formData = new FormData();
+  formData.append("template", pdfFile);
+  formData.append("dataset", excelFile);
+  formData.append("settings", JSON.stringify(config));
+  formData.append("previewOnly", "true");
+  formData.append("saveToDb", "false");
+
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Preview failed.");
+
+    // Get the first certificate's PDF URL
+    const firstCert = data.certificates?.[0];
+    if (firstCert?.pdfUrl) {
+      setPreviewPdfUrl(firstCert.pdfUrl);
+      setShowPreviewModal(true);
+    }
+  } catch (err: unknown) {
+    setError(err instanceof Error ? err.message : "Preview failed.");
+  } finally {
+    setPreviewLoading(false);
+  }
+};
 
   const handleGenerate = async () => {
     if (!pdfFile || !excelFile) {
@@ -1208,7 +1248,24 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-4 flex flex-col gap-3">
+                {/* Preview Button */}
+                <button
+                  onClick={handlePreview}
+                  disabled={previewLoading || loading || !pdfFile || !excelFile}
+                  className="w-full btn-secondary py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {previewLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating Preview...
+                    </>
+                  ) : (
+                    "\uD83D\uDC41 Preview First Row"
+                  )}
+                </button>
+
+                {/* Generate Button */}
                 <button
                   onClick={handleGenerate}
                   disabled={loading}
@@ -1445,6 +1502,48 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+        {showPreviewModal && previewPdfUrl && (
+  <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+    <div className="bg-[var(--color-neon-surface)] border border-[var(--color-neon-border)] rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl">
+      
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-white">Certificate Preview</h2>
+          <p className="text-xs text-[var(--color-neon-muted)] mt-1">
+            Using data from row 1 of your dataset
+          </p>
+        </div>
+        <button
+          onClick={() => { setShowPreviewModal(false); setPreviewPdfUrl(null); }}
+          className="p-2 hover:bg-white/10 rounded-full transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Reuse existing PdfPreview component */}
+      <div className="rounded-xl overflow-hidden border border-[var(--color-neon-border)] bg-black/30 max-h-[60vh] overflow-y-auto">
+        <PdfPreview fileUrl={previewPdfUrl} />
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={() => { setShowPreviewModal(false); setPreviewPdfUrl(null); }}
+          className="flex-1 btn-secondary py-2.5 text-sm"
+        >
+          ← Edit Settings
+        </button>
+        <button
+          onClick={() => { setShowPreviewModal(false); setPreviewPdfUrl(null); handleGenerate(); }}
+          className="flex-1 btn-primary py-2.5 text-sm"
+        >
+          ✅ Looks Good — Generate All
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
       </main>
 
       {/* ─── Footer ─── */}
