@@ -90,7 +90,7 @@ Public Verification:
 - Node.js 18+
 - A [Neon](https://neon.tech) PostgreSQL database
 - An AWS S3 bucket with IAM credentials
-- A mail provider (SMTP/Gmail for Nodemailer)
+- A Resend account and API key
 
 ### Installation
 
