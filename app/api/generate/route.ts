@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
     const datasetFile = formData.get("dataset") as File | null;
     const eventIdString = formData.get("eventId") as string | null;
     const sendEmails = formData.get("sendEmails") === "true";
+    const previewOnly = formData.get("previewOnly") === "true";
     const emailTemplate =
       (formData.get("emailTemplate") as "formal" | "friendly" | "short" | null) ??
       "formal";
@@ -240,6 +241,63 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
+
+    // ── Preview-only: generate a single certificate from row[0] in-memory ──
+    if (previewOnly) {
+      const protocol = req.headers.get("x-forwarded-proto") || "http";
+      const host = req.headers.get("host");
+      const dynamicBaseUrl = host ? `${protocol}://${host}` : undefined;
+
+      const normalizedRow: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(rows[0])) {
+        normalizedRow[normalizeKey(key)] = value;
+      }
+
+      const previewCertData = {
+        name: String(normalizedRow.name || "Preview Name"),
+        course: String(normalizedRow.course || "Preview Course"),
+        issueDate: String(normalizedRow.issuedate || "Preview Date"),
+        certificateId: "PREVIEW-0000",
+      };
+
+      try {
+        const pdfBuffer = await generateCertificate(
+          templateBuffer,
+          previewCertData,
+          settings,
+          dynamicBaseUrl,
+        );
+
+        const pdfUrl = `data:application/pdf;base64,${pdfBuffer.toString("base64")}`;
+
+        return NextResponse.json(
+          {
+            success: true,
+            preview: true,
+            count: 1,
+            certificates: [
+              {
+                certificateId: previewCertData.certificateId,
+                name: previewCertData.name,
+                course: previewCertData.course,
+                issueDate: previewCertData.issueDate,
+                pdfUrl,
+                status: "preview",
+              },
+            ],
+          },
+          { status: 200 },
+        );
+      } catch (previewError) {
+        console.error("Preview generation error:", previewError);
+        return NextResponse.json(
+          { error: "Preview failed: " + getErrorMessage(previewError) },
+          { status: 500 },
+        );
+      }
+    }
+
+    // ── Bulk generation continues below ──
 
     const rowCountErr = validateRowCount(rows.length);
     if (rowCountErr) {
