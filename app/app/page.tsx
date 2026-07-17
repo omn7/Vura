@@ -89,6 +89,8 @@ export default function Dashboard() {
   const [saveToDb, setSaveToDb] = useState(false);
   const [isZipping, setIsZipping] = useState(false);
   const [emailHeaders, setEmailHeaders] = useState<string[]>([]);
+  const [sheetHeaders, setSheetHeaders] = useState<string[]>([]);
+  const [selectedEmailHeader, setSelectedEmailHeader] = useState<string>("");
   const [sendEmails, setSendEmails] = useState(false);
   const [emailTemplate, setEmailTemplate] = useState<EmailTemplateId>("formal");
   const [customEmailBody, setCustomEmailBody] = useState<string>(
@@ -192,6 +194,8 @@ export default function Dashboard() {
     async function inspectDataset() {
       if (!excelFile) {
         setEmailHeaders([]);
+        setSheetHeaders([]);
+        setSelectedEmailHeader("");
         setSendEmails(false);
         return;
       }
@@ -214,8 +218,20 @@ export default function Dashboard() {
         }
 
         const headers = detectEmailHeaders(rows);
+        const allCols = rows.length > 0 ? Object.keys(rows[0]) : [];
+
         if (!cancelled) {
+          setSheetHeaders(allCols);
           setEmailHeaders(headers);
+          
+          if (headers.length > 0) {
+            setSelectedEmailHeader(headers[0]);
+          } else if (allCols.length > 0) {
+            setSelectedEmailHeader("");
+          } else {
+            setSelectedEmailHeader("");
+          }
+
           if (headers.length === 0) {
             setSendEmails(false);
           }
@@ -224,6 +240,8 @@ export default function Dashboard() {
         console.error("Failed to inspect dataset for email columns", err);
         if (!cancelled) {
           setEmailHeaders([]);
+          setSheetHeaders([]);
+          setSelectedEmailHeader("");
           setSendEmails(false);
         }
       } finally {
@@ -266,9 +284,9 @@ export default function Dashboard() {
       return;
     }
 
-    if (sendEmails && emailHeaders.length === 0) {
+    if (sendEmails && !selectedEmailHeader) {
       setError(
-        "No email column was found in the dataset. Add an email column or disable email sending.",
+        "Please select the spreadsheet column containing recipient emails, or disable email sending.",
       );
       return;
     }
@@ -293,6 +311,7 @@ export default function Dashboard() {
     formData.append("sendEmails", String(sendEmails));
     formData.append("emailTemplate", emailTemplate);
     formData.append("customEmailBody", customEmailBody.trim());
+    formData.append("emailHeader", selectedEmailHeader);
 
     try {
       const response = await fetch("/api/generate", {
@@ -1084,16 +1103,20 @@ export default function Dashboard() {
                         <p className="text-xs text-[var(--color-neon-muted)] mt-1">
                           {inspectingDataset
                             ? "Scanning your spreadsheet for email columns..."
-                            : emailHeaders.length > 0
-                              ? `Email column found: ${emailHeaders.join(", ")}`
-                              : "Add an email column to your sheet to enable sending."}
+                            : selectedEmailHeader
+                              ? `Selected email column: ${selectedEmailHeader}`
+                              : emailHeaders.length > 0
+                                ? `Email column found: ${emailHeaders.join(", ")}`
+                                : sheetHeaders.length > 0
+                                  ? "No email column auto-detected. Select one below."
+                                  : "Add an email column to your sheet to enable sending."}
                         </p>
                       </div>
                       <button
                         type="button"
-                        disabled={emailHeaders.length === 0 || inspectingDataset || status === "unauthenticated"}
+                        disabled={sheetHeaders.length === 0 || inspectingDataset || status === "unauthenticated"}
                         onClick={() => {
-                          if (emailHeaders.length === 0 || inspectingDataset || status === "unauthenticated") return;
+                          if (sheetHeaders.length === 0 || inspectingDataset || status === "unauthenticated") return;
                           setSendEmails((prev) => {
                             const next = !prev;
                             if (next && !saveToDb) {
@@ -1102,10 +1125,10 @@ export default function Dashboard() {
                             return next;
                           });
                         }}
-                        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors border ${sendEmails ? "border-transparent bg-green-500" : "border-[var(--color-neon-border)] bg-transparent"} ${(emailHeaders.length === 0 || inspectingDataset || status === "unauthenticated") ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors border ${sendEmails ? "border-transparent bg-green-500" : "border-[var(--color-neon-border)] bg-transparent"} ${(sheetHeaders.length === 0 || inspectingDataset || status === "unauthenticated") ? "opacity-50 cursor-not-allowed" : ""}`}
                         title={
-                          emailHeaders.length === 0
-                            ? "No email column detected"
+                          sheetHeaders.length === 0
+                            ? "No columns detected"
                             : "Toggle email sending"
                         }
                       >
@@ -1115,8 +1138,26 @@ export default function Dashboard() {
                       </button>
                     </div>
 
-                    {sendEmails && emailHeaders.length > 0 && (
+                    {sendEmails && sheetHeaders.length > 0 && (
                       <div className="space-y-4 bg-black/20 p-4 rounded-xl border border-[var(--color-neon-border)]/50">
+                        <div>
+                          <label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">
+                            Recipient Email Column <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={selectedEmailHeader}
+                            onChange={(e) => setSelectedEmailHeader(e.target.value)}
+                            className="w-full bg-[var(--color-neon-bg)] border border-[var(--color-neon-border)] text-white rounded-lg p-2.5 text-sm focus:border-[var(--color-neon-primary)] outline-none transition-colors"
+                          >
+                            <option value="" disabled>-- Select Column containing Email --</option>
+                            {sheetHeaders.map((col) => (
+                              <option key={col} value={col}>
+                                {col} {emailHeaders.includes(col) ? "(Auto-detected)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
                         <div>
                           <label className="text-xs text-[var(--color-neon-muted)] font-medium mb-1 block">
                             Email Template
@@ -1199,7 +1240,7 @@ export default function Dashboard() {
                           : "Database saving disabled. Documents won't appear in gallery. QR Verification is turned off."}
                       </p>
                     )}
-                    {sendEmails && emailHeaders.length > 0 && (
+                    {sendEmails && selectedEmailHeader && (
                       <p className="text-xs text-[var(--color-neon-primary)] mt-2">
                         Email sending is enabled. Each row with a valid email address will receive the selected template after generation.
                       </p>

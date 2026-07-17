@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       (formData.get("emailTemplate") as "formal" | "friendly" | "short" | null) ??
       "formal";
     const customEmailBody = (formData.get("customEmailBody") as string | null) ?? "";
+    const emailHeader = formData.get("emailHeader") as string | null;
 
     if (!templateFile || !datasetFile) {
       return NextResponse.json(
@@ -183,7 +184,8 @@ export async function POST(req: NextRequest) {
     const datasetBuffer = await datasetFile.arrayBuffer();
 
     // 2. Parse dataset (XLSX or CSV)
-    const normalizeKey = (key: string) => key.trim().toLowerCase();
+    const normalizeKey = (key: string) =>
+      key.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
     const datasetName = datasetFile.name.toLowerCase();
 
     let rows: Record<string, unknown>[] = [];
@@ -279,11 +281,19 @@ export async function POST(req: NextRequest) {
         normalizedRow[normalizeKey(key)] = value;
       }
 
-      const recipientEmailValue =
-        normalizedRow.email ??
-        normalizedRow.recipientemail ??
-        normalizedRow.recipient_email ??
-        null;
+      let recipientEmailValue = null;
+      if (emailHeader) {
+        recipientEmailValue = normalizedRow[normalizeKey(emailHeader)];
+      }
+      if (!recipientEmailValue) {
+        recipientEmailValue =
+          normalizedRow.email ??
+          normalizedRow.recipientemail ??
+          normalizedRow.recipientemailaddress ??
+          normalizedRow.emailaddress ??
+          normalizedRow.mail ??
+          null;
+      }
       const recipientEmail = recipientEmailValue
         ? String(recipientEmailValue)
         : null;
