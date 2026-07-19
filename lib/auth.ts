@@ -7,6 +7,10 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validations";
 
+if (process.env.NODE_ENV === "production") {
+    process.env.NEXTAUTH_URL = "https://vurakit.in";
+}
+
 import {
     clearFailedAttempts,
     // getRateLimitKey, // Not directly used in this file for IP extraction
