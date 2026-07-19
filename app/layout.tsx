@@ -55,6 +55,7 @@ export const metadata: Metadata = {
 }
 
 import { Providers } from "@/components/Providers"
+import BackToTop from "@/components/BackToTop"
 
 export default function RootLayout({
   children,
@@ -67,6 +68,7 @@ export default function RootLayout({
         <Providers>
           <div className="relative min-h-screen flex flex-col overflow-x-hidden">
             {children}
+            <BackToTop />
           </div>
         </Providers>
       </body>
