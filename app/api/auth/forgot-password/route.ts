@@ -3,6 +3,11 @@ import prisma from "@/lib/prisma";
 import crypto from "crypto";
 import { sendPasswordResetEmail } from "@/lib/certificateEmail";
 import { forgotPasswordSchema } from "@/lib/validations";
+
+if (process.env.NODE_ENV === "production") {
+    process.env.NEXTAUTH_URL = "https://vurakit.in";
+    process.env.NEXT_PUBLIC_BASE_URL = "https://vurakit.in";
+}
 import {
     AUTH_RATE_LIMIT_MESSAGE,
     getRateLimitKey,
