@@ -541,3 +541,223 @@
   background: #fff;
   box-shadow: 0 0 12px 2px rgba(0, 229, 153, 0.9);
 }
+
+/* ==========================================================
+   Responsive Utilities
+   Append this at the end of global.css
+========================================================== */
+
+/* ---------- Large Tablets ---------- */
+@media (max-width: 1024px) {
+  .glow-bg {
+    width: 650px;
+    height: 320px;
+  }
+
+  .glass-card,
+  .metric-card {
+    padding: 1.25rem;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    padding: 0.75rem 1.4rem;
+  }
+
+  .data-table {
+    font-size: 0.875rem;
+  }
+}
+
+/* ---------- Tablets ---------- */
+@media (max-width: 768px) {
+
+  html {
+    font-size: 15px;
+  }
+
+  .glow-bg {
+    width: 520px;
+    height: 260px;
+    opacity: 0.75;
+  }
+
+  .glass-card,
+  .metric-card,
+  .glow-panel {
+    padding: 1rem;
+    border-radius: 14px;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-ghost {
+    width: fit-content;
+  }
+
+  .badge-valid,
+  .badge-invalid {
+    font-size: 0.8rem;
+    padding: 0.55rem 0.9rem;
+  }
+
+  .vura-input,
+  .config-input {
+    font-size: 16px;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+  }
+
+  /* Responsive Table */
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.8rem;
+  }
+
+  .animate-marquee {
+    animation-duration: 45s;
+  }
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 640px) {
+
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .glow-bg {
+    width: 380px;
+    height: 180px;
+    top: -5%;
+  }
+
+  .glass-card,
+  .metric-card,
+  .glow-panel {
+    padding: 0.9rem;
+    border-radius: 12px;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    min-height: 46px;
+    font-size: 0.95rem;
+  }
+
+  .btn-ghost {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .vura-input,
+  .config-input {
+    padding: 0.8rem;
+    font-size: 16px;
+  }
+
+  .dropzone {
+    min-height: 180px;
+    padding: 1rem;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+  }
+
+  .badge-valid,
+  .badge-invalid,
+  .badge-pill {
+    font-size: 0.72rem;
+  }
+
+  .animate-shooting-star {
+    display: none;
+  }
+
+  .floating,
+  .floating-delayed,
+  .floating-slow {
+    animation: none;
+  }
+}
+
+/* ---------- Small Phones ---------- */
+@media (max-width: 480px) {
+
+  .glow-bg {
+    width: 280px;
+    height: 140px;
+  }
+
+  .glass-card,
+  .metric-card {
+    padding: 0.8rem;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    border-radius: 14px;
+  }
+
+  .section-label {
+    padding: 0.3rem 0.6rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.65rem;
+    font-size: 0.75rem;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}
+
+/* ---------- Reduced Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .floating,
+  .floating-delayed,
+  .floating-slow,
+  .animate-marquee,
+  .animate-pulse-glow,
+  .animate-shimmer,
+  .animate-shooting-star {
+    animation: none !important;
+  }
+    }
+
+  
