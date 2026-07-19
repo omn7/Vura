@@ -88,11 +88,11 @@ async function sendOTPEmail(email: string, otp: string) {
 }
 
 /**
- * Validates admin credentials (email + password) and sends an OTP via email.
+ * Validates admin email and sends an OTP via email.
  */
-export async function requestAdminOtp(email: string, passport: string) {
-    if (email !== ADMIN_EMAIL || passport !== ADMIN_PASSWORD) {
-        return { success: false, error: "Invalid administrator email or password." };
+export async function requestAdminOtp(email: string) {
+    if (email !== ADMIN_EMAIL) {
+        return { success: false, error: "Invalid administrator email." };
     }
 
     // Generate 6-digit OTP

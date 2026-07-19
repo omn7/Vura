@@ -17,7 +17,6 @@ export default function AdminLoginPage() {
     
     // Inputs state
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
     const [otp, setOtp] = useState("");
     
     // UI state
@@ -25,14 +24,14 @@ export default function AdminLoginPage() {
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
 
-    // Step 1: Submit Credentials (Email & Password)
+    // Step 1: Submit Email
     const handleCredentialsSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
 
         try {
-            const res = await requestAdminOtp(email, password);
+            const res = await requestAdminOtp(email);
             if (res.success) {
                 setStep("otp");
                 setSuccessMessage("Verification code sent to " + email);
@@ -91,7 +90,7 @@ export default function AdminLoginPage() {
 
                         <h1 className="text-2xl font-extrabold mb-2 text-white">Admin Console</h1>
                         <p className="text-[var(--color-neon-muted)] mb-8 text-xs leading-relaxed max-w-[280px]">
-                            Access is restricted. Log in with your admin credentials to receive an OTP code.
+                            Access is restricted. Enter your administrator email to receive an OTP code.
                         </p>
 
                         {error && (
@@ -111,17 +110,6 @@ export default function AdminLoginPage() {
                                     onChange={e => setEmail(e.target.value)}
                                     className="w-full mt-1.5 bg-[var(--color-neon-surface)] border border-[var(--color-neon-border)] rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500/30 focus:border-red-500 outline-none text-sm placeholder-[var(--color-neon-muted)]"
                                     placeholder="admin@example.com"
-                                />
-                            </div>
-                            <div className="text-left">
-                                <label className="text-xs text-[var(--color-neon-muted)] ml-1">Password</label>
-                                <input
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    className="w-full mt-1.5 bg-[var(--color-neon-surface)] border border-[var(--color-neon-border)] rounded-xl py-3 px-4 focus:ring-2 focus:ring-red-500/30 focus:border-red-500 outline-none text-sm placeholder-[var(--color-neon-muted)]"
-                                    placeholder="••••••••"
                                 />
                             </div>
                             <button
@@ -189,7 +177,7 @@ export default function AdminLoginPage() {
                             }}
                             className="inline-flex items-center gap-1.5 text-xs text-[var(--color-neon-muted)] hover:text-white mt-4"
                         >
-                            <ArrowLeft className="w-3.5 h-3.5" /> Back to credentials
+                            <ArrowLeft className="w-3.5 h-3.5" /> Back to email login
                         </button>
                     </>
                 )}
