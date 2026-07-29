@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
+import { nonEmptyString } from "@/lib/validations"
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,6 +27,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const nameValidation = nonEmptyString("Template name").safeParse(name)
+    if (!nameValidation.success) {
+      return NextResponse.json(
+        { error: nameValidation.error.errors[0].message },
+        { status: 400 }
+      )
+    }
+
     if (!Array.isArray(fields)) {
       return NextResponse.json({ error: "fields must be an array" }, { status: 400 })
     }
@@ -46,16 +55,18 @@ export async function POST(req: NextRequest) {
     const existing = await prisma.template.findUnique({ where: { eventId } })
 
     // Upsert template (create or update if already exists for this event)
+    const trimmedName = name.trim()
+
     const template = await prisma.template.upsert({
       where: { eventId },
       update: {
-        name,
+        name: trimmedName,
         bgImageUrl,
         fields,
         updatedAt: new Date(),
       },
       create: {
-        name,
+        name: trimmedName,
         eventId,
         bgImageUrl,
         fields,

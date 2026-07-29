@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const emailSchema = z.string().email("Invalid email format");
 
+export const nonEmptyString = (fieldName: string) =>
+  z.string().min(1, `${fieldName} is required`).refine(
+    (val) => val.trim().length > 0,
+    { message: `${fieldName} cannot be empty or contain only spaces` }
+  );
+
 export const passwordSchema = z
     .string()
     .min(8, "Password must be at least 8 characters")
