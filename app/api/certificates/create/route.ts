@@ -5,6 +5,7 @@ import { uploadToS3 } from "@/lib/s3";
 import { generateCertificateId } from "@/lib/certificateIds";
 import { sendCertificateEmail } from "@/lib/certificateEmail";
 import { safeFetch } from "@/lib/url-validation";
+import { validateTemplateFetchResponse, TEMPLATE_MAX_SIZE } from "@/lib/file-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -87,9 +88,6 @@ export async function POST(req: NextRequest) {
     });
 
     // ── 4. Validate and fetch the PDF template ────────────────────────────
-    // safeFetch validates the URL (scheme, hostname, resolved IPs) at every
-    // hop and follows redirects manually so a public URL cannot redirect to
-    // an internal host or cloud metadata endpoint.
     let templateBuffer: ArrayBuffer;
     try {
         const templateRes = await safeFetch(templateUrl);
@@ -103,7 +101,36 @@ export async function POST(req: NextRequest) {
                 { status: 400, headers: corsHeaders }
             );
         }
+
+        // Validate Content-Type and Content-Length before reading the body
+        const fetchValidationErr = validateTemplateFetchResponse(
+            templateRes.headers.get("content-type"),
+            templateRes.headers.get("content-length"),
+        );
+        if (fetchValidationErr) {
+            await prisma.certificate.update({
+                where: { certificateId },
+                data: { status: "failed", failureReason: fetchValidationErr.message },
+            });
+            return NextResponse.json(
+                { error: fetchValidationErr.message },
+                { status: fetchValidationErr.status, headers: corsHeaders }
+            );
+        }
+
         templateBuffer = await templateRes.arrayBuffer();
+
+        // Secondary size check on actual body (Content-Length may be absent)
+        if (templateBuffer.byteLength > TEMPLATE_MAX_SIZE) {
+            await prisma.certificate.update({
+                where: { certificateId },
+                data: { status: "failed", failureReason: "Template file too large" },
+            });
+            return NextResponse.json(
+                { error: "Template file too large" },
+                { status: 413, headers: corsHeaders }
+            );
+        }
     } catch (error) {
         const message = error instanceof Error ? error.message : "Could not reach templateUrl.";
         await prisma.certificate.update({
