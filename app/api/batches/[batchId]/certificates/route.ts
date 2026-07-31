@@ -23,7 +23,7 @@ const searchParamsSchema = z.object({
     page: z.preprocess(
         (val) => {
             if (val === "" || val === null || val === undefined) return undefined;
-            const parsed = parseInt(String(val), 10);
+            const parsed = parseInt(String(val, 10), 10);
             return isNaN(parsed) ? undefined : parsed;
         },
         z.number().int().positive().optional()
@@ -31,7 +31,7 @@ const searchParamsSchema = z.object({
     limit: z.preprocess(
         (val) => {
             if (val === "" || val === null || val === undefined) return undefined;
-            const parsed = parseInt(String(val), 10);
+            const parsed = parseInt(String(val, 10), 10);
             return isNaN(parsed) ? undefined : parsed;
         },
         z.number().int().positive().optional()
