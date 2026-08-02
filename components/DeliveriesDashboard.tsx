@@ -312,7 +312,7 @@ export default function DeliveriesDashboard() {
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="w-full appearance-none rounded-xl border border-[var(--color-neon-border)] bg-[var(--color-neon-surface)] pl-10 pr-4 py-3 text-sm text-white outline-none transition-colors focus:border-[var(--color-neon-primary)]"
                     >
-                        {STATUS_OPTIONS.map((option) => (
+                        {(STATUS_OPTIONS ?? []).map((option) => (
                             <option key={option.label} value={option.value}>
                                 {option.label}
                             </option>
@@ -377,7 +377,7 @@ export default function DeliveriesDashboard() {
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-8 h-8 rounded-full bg-[var(--color-neon-primary)]/10 border border-[var(--color-neon-primary)]/20 flex items-center justify-center shrink-0">
                                                             <span className="text-[10px] font-bold text-[var(--color-neon-primary)]">
-                                                                {record.name.charAt(0).toUpperCase()}
+                                                                {record.name[0].toUpperCase()}
                                                             </span>
                                                         </div>
                                                         <div>

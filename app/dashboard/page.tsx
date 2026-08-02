@@ -61,7 +61,7 @@ export default async function DashboardPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {STATS.map(s => (
+                    {(STATS ?? []).map(s => (
                         <div key={s.label} className="metric-card flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <p className="text-xs font-semibold text-[var(--color-neon-muted)] uppercase tracking-wider">{s.label}</p>
@@ -115,7 +115,7 @@ export default async function DashboardPage() {
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-[var(--color-neon-primary)]/10 border border-[var(--color-neon-primary)]/20 flex items-center justify-center shrink-0">
                                                         <span className="text-[10px] font-bold text-[var(--color-neon-primary)]">
-                                                            {cert.name.charAt(0).toUpperCase()}
+                                                            {cert.name[0].toUpperCase()}
                                                         </span>
                                                     </div>
                                                     <span className="font-medium text-white text-sm">{cert.name}</span>
