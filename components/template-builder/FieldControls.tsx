@@ -17,7 +17,7 @@ export default function FieldControls({ field, onChange }: FieldControlsProps) {
   }
 
   const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(8, Math.min(72, parseInt(e.target.value) || 8))
+    const value = Math.max(8, Math.min(72, parseInt(e.target.value, 10) || 8))
     onChange({ ...field, fontSize: value })
   }
 
@@ -26,13 +26,13 @@ export default function FieldControls({ field, onChange }: FieldControlsProps) {
   }
 
   const handleXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseInt(e.target.value)
+    const parsed = parseInt(e.target.value, 10)
     const clamped = Math.max(0, Math.min(794, Number.isNaN(parsed) ? 0 : parsed))
     onChange({ ...field, x: clamped })
   }
 
   const handleYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseInt(e.target.value)
+    const parsed = parseInt(e.target.value, 10)
     const clamped = Math.max(0, Math.min(562, Number.isNaN(parsed) ? 0 : parsed))
     onChange({ ...field, y: clamped })
   }
