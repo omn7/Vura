@@ -224,7 +224,7 @@ export default function BatchCertificateDashboard({ batchId }: Props) {
                             onChange={(event) => setStatus(event.target.value)}
                             className="w-full appearance-none rounded-xl border border-[var(--color-neon-border)] bg-[var(--color-neon-surface)] pl-10 pr-4 py-3 text-sm text-white outline-none transition-colors focus:border-[var(--color-neon-primary)]"
                         >
-                            {STATUS_OPTIONS.map((option) => (
+                            {(STATUS_OPTIONS ?? []).map((option) => (
                                 <option key={option.label} value={option.value}>
                                     {option.label}
                                 </option>

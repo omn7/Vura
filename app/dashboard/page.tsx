@@ -61,7 +61,7 @@ export default async function DashboardPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {STATS.map(s => (
+                    {(STATS ?? []).map(s => (
                         <div key={s.label} className="metric-card flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <p className="text-xs font-semibold text-[var(--color-neon-muted)] uppercase tracking-wider">{s.label}</p>

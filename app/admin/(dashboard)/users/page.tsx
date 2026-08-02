@@ -119,7 +119,7 @@ export default async function AdminUsersPage(props: PageProps) {
                         </thead>
                         <tbody>
                             {users.length > 0 ? (
-                                users.map((user) => (
+                                (users ?? []).map((user) => (
                                     <tr key={user.id} className="hover:bg-white/5 transition-all">
                                         <td>
                                             <div className="flex items-center gap-3">
