@@ -345,3 +345,5 @@ export default async function AdminOverviewPage() {
         </div>
     );
 }
+
+.catch(err => console.error("Promise.all failed:", err));
