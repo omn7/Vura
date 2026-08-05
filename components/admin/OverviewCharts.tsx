@@ -49,7 +49,7 @@ export default function OverviewCharts({ trendData, statusBreakdown }: Props) {
         : "";
 
     const areaPath = points.length > 0
-        ? `${linePath} L ${points[points.length - 1].x} ${paddingY + chartHeight} L ${points[0].x} ${paddingY + chartHeight} Z`
+        ? `${linePath} L ${points.at(-1).x} ${paddingY + chartHeight} L ${points[0].x} ${paddingY + chartHeight} Z`
         : "";
 
     // Status breakdown calculation
