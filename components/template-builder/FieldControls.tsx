@@ -17,7 +17,7 @@ export default function FieldControls({ field, onChange }: FieldControlsProps) {
   }
 
   const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(8, Math.min(72, parseInt(e.target.value) || 8))
+    const value = Math.max(8, Math.min(72, parseInt(e.target.value, 10) || 8))
     onChange({ ...field, fontSize: value })
   }
 
