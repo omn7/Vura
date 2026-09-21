@@ -18,7 +18,8 @@ export default function VerifyPage() {
         
         try {
             const res = await fetch(`/api/verify/${trimmedId}`)
-            const data = await res.json()
+            if (!res.ok) throw new Error("Request failed");
+const data = await res.json()
             setResult({ status: res.status, data })
         } catch (error) {
             console.error("Verification API call failed:", error);
