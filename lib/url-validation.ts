@@ -22,7 +22,7 @@ function ipv4ToInt(ip: string): number {
     let result = 0;
     for (const part of parts) {
         const num = parseInt(part, 10);
-        if (isNaN(num) || num < 0 || num > 255) return -1;
+        if (Number.isNaN(num) || num < 0 || num > 255) return -1;
         result = (result << 8) | num;
     }
     return result >>> 0;

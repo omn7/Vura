@@ -26,13 +26,13 @@ export default function FieldControls({ field, onChange }: FieldControlsProps) {
   }
 
   const handleXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseInt(e.target.value)
+    const parsed = parseInt(e.target.value, 10)
     const clamped = Math.max(0, Math.min(794, Number.isNaN(parsed) ? 0 : parsed))
     onChange({ ...field, x: clamped })
   }
 
   const handleYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const parsed = parseInt(e.target.value)
+    const parsed = parseInt(e.target.value, 10)
     const clamped = Math.max(0, Math.min(562, Number.isNaN(parsed) ? 0 : parsed))
     onChange({ ...field, y: clamped })
   }
