@@ -119,7 +119,7 @@ export default async function AdminUsersPage(props: PageProps) {
                         </thead>
                         <tbody>
                             {users.length > 0 ? (
-                                users.map((user) => (
+                                (users ?? []).map((user) => (
                                     <tr key={user.id} className="hover:bg-white/5 transition-all">
                                         <td>
                                             <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export default async function AdminUsersPage(props: PageProps) {
                                                     <img src={user.image} alt={user.name || "avatar"} className="w-8 h-8 rounded-full border border-[var(--color-neon-border)] shrink-0 object-cover" />
                                                 ) : (
                                                     <div className="w-8 h-8 rounded-full bg-[var(--color-neon-border)] text-[var(--color-neon-muted)] flex items-center justify-center shrink-0 font-bold text-xs uppercase">
-                                                        {(user.name || user.email || "?").charAt(0)}
+                                                        {(user.name || user.email || "?")[0]}
                                                     </div>
                                                 )}
                                                 <div className="min-w-0">

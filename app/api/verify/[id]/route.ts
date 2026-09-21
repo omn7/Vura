@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
     const segments = new URL(req.url).pathname.split("/");
     const id = segments[segments.length - 1];
 
-    if (!id || id.trim() === "") {
+    if (!id || id.trim().length === 0) {
         return NextResponse.json(
             { error: "Certificate ID is required." },
             { status: 400, headers: corsHeaders() },
