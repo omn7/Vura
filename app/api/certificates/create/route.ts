@@ -68,16 +68,33 @@ export async function POST(req: NextRequest) {
         );
     }
 
+    if (typeof recipient !== "string" || !recipient.trim()) {
+        return NextResponse.json(
+            { error: "Recipient name cannot be empty or contain only spaces." },
+            { status: 400, headers: corsHeaders }
+        );
+    }
+
+    if (typeof course !== "string" || !course.trim()) {
+        return NextResponse.json(
+            { error: "Course name cannot be empty or contain only spaces." },
+            { status: 400, headers: corsHeaders }
+        );
+    }
+
     // ── 3. Generate the certificate record up front so failures are tracked ──
     const certificateId = generateCertificateId();
+    const trimmedRecipient = recipient.trim();
+    const trimmedCourse = course.trim();
+    const trimmedIssueDate = issueDate.trim();
 
     await prisma.certificate.create({
         data: {
             certificateId,
-            name: recipient,
+            name: trimmedRecipient,
             recipientEmail,
-            course,
-            issueDate,
+            course: trimmedCourse,
+            issueDate: trimmedIssueDate,
             templateUrl,
             pdfUrl: "",
             batchId,
@@ -122,9 +139,9 @@ export async function POST(req: NextRequest) {
     const baseUrl = `${protocol}://${host}`;
 
     const certData = {
-        name: recipient,
-        course,
-        issueDate,
+        name: trimmedRecipient,
+        course: trimmedCourse,
+        issueDate: trimmedIssueDate,
         certificateId,
     };
 
@@ -176,7 +193,7 @@ export async function POST(req: NextRequest) {
         try {
             await sendCertificateEmail({
                 recipientEmail,
-                recipientName: recipient,
+                recipientName: trimmedRecipient,
                 certificateId,
                 verifyUrl: `${baseUrl}/verify/${certificateId}`,
             });
