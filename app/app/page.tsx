@@ -1707,3 +1707,5 @@ const [previewLoading, setPreviewLoading] = useState(false);
     </div>
   );
 }
+
+.catch(err => console.error("Promise.all failed:", err));
